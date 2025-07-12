@@ -5,10 +5,85 @@ import { SlidePreviewView } from "./SlidePreviewView";
 import { getSlidesWithBoundaries, Slide } from "./Parser";
 
 const presentationCssCommon = `
-            body { margin: 0; background-color: var(--background-primary, #1c1c1c); overflow: hidden; }
-            .slide-wrapper { display: none; width: 100vw; height: 100vh; justify-content: center; align-items: center; }
-            .slide-preview { width: 98vw; aspect-ratio: 16 / 9; max-width: 1800px; position: relative !important; top: auto !important; right: auto !important; transform: none !imporant; container-type: size !important; }
-        `;
+    body { margin: 0; background-color: var(--background-primary, #1c1c1c); overflow: hidden; }
+    .slide-wrapper {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        transition: opacity 0.4s ease-in-out;
+        pointer-events: none;
+    }
+    .slide-preview {
+        aspect-ratio: 16 / 9;
+        width: 98vw;
+        height: calc(98vw * 9 / 16);
+        max-width: 98vw;
+        max-height: 98vh;
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        transform: none !important;
+        container-type: size !important;
+    }
+
+    /* --- Common Navigation Styles for Export --- */
+    .slide-preview .navigation {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        height: 40px;
+        display: flex;
+        justify-content: space-between;
+        z-index: 1000;
+        pointer-events: none;
+    }
+    .nav-label { 
+        pointer-events: all;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out;
+        opacity: 0;
+    }
+    .slide-preview .nav-label.next {
+        width: 0;
+        height: 0;
+        border-top: 20px solid transparent;
+        border-bottom: 20px solid transparent;
+        border-left: 20px solid rgba(0, 0, 0, 0.4); /* This creates the triangle */
+    }
+    .slide-preview .nav-label.prev {
+        width: 0;
+        height: 0;
+        border-top: 20px solid transparent;
+        border-bottom: 20px solid transparent;
+        border-right: 20px solid rgba(0, 0, 0, 0.4); /* This creates the triangle */
+    }
+
+    .slide-preview:hover .nav-label {
+        opacity: 0.8;
+    }
+    .slide-preview .nav-label.prev:hover {
+        opacity: 1;
+        border-top: 20px solid transparent;
+        border-bottom: 20px solid transparent;
+        border-right: 20px solid rgba(90, 90, 90, 0.4); /* This creates the triangle */
+    }
+    .slide-preview .nav-label.next:hover {
+        opacity: 1;
+        border-top: 20px solid transparent;
+        border-bottom: 20px solid transparent;
+        border-left: 20px solid rgba(90, 90, 90, 0.4); /* This creates the triangle */
+    }
+`;
 
 export class Exporter {
 	private app: App;
@@ -198,118 +273,44 @@ export class Exporter {
 		return "";
 	}
 
-	private createCssOnlyHtmlDocument(
-		title: string,
-		slidesHtml: string[],
-		css: string,
-		bodyAndThemeClasses: string,
-	): string {
-		const numSlides = slidesHtml.length;
-		const bodyClass = bodyAndThemeClasses.includes("theme-dark")
-			? "theme-dark"
-			: "theme-light";
+    private createCssOnlyHtmlDocument(title: string, slidesHtml: string[], css: string, bodyAndThemeClasses: string): string {
+        const numSlides = slidesHtml.length;
+        const bodyClass = bodyAndThemeClasses.includes('theme-dark') ? 'theme-dark' : 'theme-light';
 
-		// 1. Radio inputs for state
-		const radioInputs = slidesHtml
-			.map(
-				(_, index) =>
-					`<input type="radio" name="slide" id="s${index + 1}" ${index === 0 ? "checked" : ""}>`,
-			)
-			.join("\n");
+        const radioInputs = slidesHtml.map((_, index) =>
+            `<input type="radio" name="slide" id="s${index + 1}" ${index === 0 ? 'checked' : ''}>`
+        ).join('\n');
 
-		// 2. Slide content with navigation injected into slide-preview
-		const slideMarkup = slidesHtml
-			.map((slideOuterHtml, index) => {
-				if (!slideOuterHtml) return "";
-				const i = index + 1;
-				const prev = i === 1 ? numSlides : i - 1;
-				const next = i === numSlides ? 1 : i + 1;
+        const slideMarkup = slidesHtml.map((slideOuterHtml, index) => {
+            if (!slideOuterHtml) return '';
+            const i = index + 1;
+            const prev = (i === 1) ? numSlides : i - 1;
+            const next = (i === numSlides) ? 1 : i + 1;
 
-				const prevLabel = `<label for="s${prev}" class="nav-label prev"></label>`;
-				const nextLabel = `<label for="s${next}" class="nav-label next"></label>`;
-				const navigationDiv = `<div class="navigation">${prevLabel}${nextLabel}</div>`;
+            // Use the unified .nav-label class
+            const prevLabel = `<label for="s${prev}" class="nav-label prev">‹</label>`;
+            const nextLabel = `<label for="s${next}" class="nav-label next">›</label>`;
+            const navigationDiv = `<div class="navigation">${prevLabel}${nextLabel}</div>`;
+            const slideWithNav = slideOuterHtml.replace(/<\/div>$/, `${navigationDiv}</div>`);
 
-				// Inject navigation div just before the closing tag of slideOuterHtml
-				const slideWithNav = slideOuterHtml.replace(
-					/<\/div>$/,
-					`${navigationDiv}</div>`,
-				);
-
-				return `<div class="slide-wrapper">
+            return `<div class="slide-wrapper">
                 ${slideWithNav.replace('class="', 'class="is-visible ')}
              </div>`;
-			})
-			.join("\n");
+        }).join('\n');
 
-		// 3. Dynamic CSS to show the active slide
-		let dynamicCss = "";
-		for (let i = 1; i <= numSlides; i++) {
-			dynamicCss += `#s${i}:checked ~ .slides-container .slide-wrapper:nth-of-type(${i}) { display: flex; }\n`;
-		}
+        let dynamicCss = '';
+        for (let i = 1; i <= numSlides; i++) {
+            dynamicCss += `#s${i}:checked ~ .slides-container .slide-wrapper:nth-of-type(${i}) { opacity: 1; pointer-events: auto; z-index: 1; }\n`;
+        }
 
-		const presentationCss = `
+        const presentationCss = `
             ${presentationCssCommon}
             input[name="slide"] { display: none; }
-            .slides-container { width: 100vw; height: 100vh; }
-
-            /* Navigation Styles */
-            .slide-preview .navigation {
-                position: absolute;
-                bottom: 20px;
-                left: 20px;
-                right: 20px;
-                height: 40px;
-                display: flex;
-                justify-content: space-between;
-                z-index: 1000;
-                pointer-events: none;
-            }
-            .slide-preview .nav-label {
-                pointer-events: all;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                font-size: 24px;
-                font-family: sans-serif;
-                cursor: pointer;
-                user-select: none;
-                transition: all 0.2s;
-                opacity: 0.2;
-            }
-            .slide-preview .nav-label.next {
-                width: 0;
-                height: 0;
-                border-top: 20px solid transparent;
-                border-bottom: 20px solid transparent;
-                border-left: 20px solid rgba(0, 0, 0, 0.4); /* This creates the triangle */
-            }
-            .slide-preview .nav-label.prev {
-                width: 0;
-                height: 0;
-                border-top: 20px solid transparent;
-                border-bottom: 20px solid transparent;
-                border-right: 20px solid rgba(0, 0, 0, 0.4); /* This creates the triangle */
-            }
-
-            .slide-preview:hover .nav-label {
-                opacity: 0.8;
-            }
-            .slide-preview .nav-label.prev:hover {
-                opacity: 1;
-                border-top: 20px solid transparent;
-                border-bottom: 20px solid transparent;
-                border-right: 20px solid rgba(90, 90, 90, 0.4); /* This creates the triangle */
-            }
-            .slide-preview .nav-label.next:hover {
-                opacity: 1;
-                border-top: 20px solid transparent;
-                border-bottom: 20px solid transparent;
-                border-left: 20px solid rgba(90, 90, 90, 0.4); /* This creates the triangle */
-            }
+            .slides-container { position: relative; width: 100vw; height: 100vh; }
             ${dynamicCss}
         `;
 
-		return `<!DOCTYPE html>
+        return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -325,55 +326,70 @@ export class Exporter {
         </div>
     </body>
     </html>`;
-	}
+    }
 
-	private createHtmlDocument(
-		title: string,
-		slidesHtml: string[],
-		css: string,
-		bodyAndThemeClasses: string,
-	): string {
-		const bodyClass = bodyAndThemeClasses.includes("theme-dark")
-			? "theme-dark"
-			: "theme-light";
-
-		const slideMarkup = slidesHtml
-			.map((slideOuterHtml, index) => {
-				if (!slideOuterHtml) return "";
-				const finalSlideHtml = slideOuterHtml.replace(
-					'class="',
-					'class="is-visible ',
-				);
-
-				return `<div class="slide-wrapper ${index === 0 ? "active" : ""}">
-                ${finalSlideHtml}
+    private createHtmlDocument(title: string, slidesHtml: string[], css: string, bodyAndThemeClasses: string): string {
+        const bodyClass = bodyAndThemeClasses.includes('theme-dark') ? 'theme-dark' : 'theme-light';
+        
+        const slideMarkup = slidesHtml.map((slideOuterHtml, index) => {
+            if (!slideOuterHtml) return '';
+            // Add div-based buttons with the .nav-button class
+            const prevButton = `<div class="nav-label prev"></div>`;
+            const nextButton = `<div class="nav-label next"></div>`;
+            const navigationDiv = `<div class="navigation">${prevButton}${nextButton}</div>`;
+            const slideWithNav = slideOuterHtml.replace(/<\/div>$/, `${navigationDiv}</div>`);
+    
+            return `<div class="slide-wrapper ${index === 0 ? 'active' : ''}">
+                ${slideWithNav.replace('class="', 'class="is-visible ')}
              </div>`;
-			})
-			.join("\n");
-
-		const presentationCss = `
+        }).join('\n');
+    
+        const presentationCss = `
             ${presentationCssCommon}
-            .slide-wrapper.active { display: flex; }
+            .slide-wrapper.active {
+                opacity: 1;
+                pointer-events: auto;
+                z-index: 1;
+            }
         `;
-
-		const navigationJs = `
+    
+        // Add click handlers for the new buttons
+        const navigationJs = `
             document.addEventListener('DOMContentLoaded', () => {
                 let current = 0;
                 const slides = document.querySelectorAll('.slide-wrapper');
-                const showSlide = (index) => slides.forEach((s, i) => s.style.display = i === index ? 'flex' : 'none');
+                const totalSlides = slides.length;
+
+                const showSlide = (index) => {
+                    if (index < 0 || index >= totalSlides) return;
+                    current = index;
+                    slides.forEach((s, i) => s.classList.toggle('active', i === current));
+                };
+
+                // Keyboard navigation
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'PageDown') {
-                        if (current < slides.length - 1) showSlide(++current);
+                        showSlide(current + 1);
                     } 
                     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
-                        if (current > 0) showSlide(--current);
+                        showSlide(current - 1);
                     }
                 });
+
+                // Click navigation using event delegation
+                document.querySelector('body').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('next')) {
+                        showSlide(current + 1);
+                    } else if (e.target.classList.contains('prev')) {
+                        showSlide(current - 1);
+                    }
+                });
+
                 showSlide(0);
             });
         `;
-
-		return `<!DOCTYPE html>
+    
+        return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -382,11 +398,13 @@ export class Exporter {
         <style>${css}${presentationCss}</style>
     </head>
     <body class="${bodyClass}">
-        ${slideMarkup}
+        <div class="slides-container">
+            ${slideMarkup}
+        </div>
         <script>${navigationJs}</script>
     </body>
     </html>`;
-	}
+    }
 
 	private async convertUrlToBase64(url: string): Promise<string> {
 		const response = await fetch(url);

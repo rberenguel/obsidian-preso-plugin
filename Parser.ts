@@ -2,6 +2,7 @@
 
 export interface Slide {
 	content: string;
+    speakerNotes: string[];
 	directives: Record<string, string>;
 	startLine: number;
 	endLine: number;
@@ -33,7 +34,6 @@ export function getSlidesWithBoundaries(rawContent: string): Slide[] {
 		for (let i = 0; i < slideLines.length; i++) {
 			const line = slideLines[i];
 			const match = line.match(directiveRegex);
-            console.log(match)
 			if (match) {
 				const key = match[1].toLowerCase();
 				const value = match[2].trim();
@@ -45,9 +45,25 @@ export function getSlidesWithBoundaries(rawContent: string): Slide[] {
 			}
 		}
 
-		const content = slideLines.slice(contentStartIndex).join("\n");
+        const speakerNotes: string[] = [];
+        const contentLines: string[] = [];
+        const remainingLines = slideLines.slice(contentStartIndex);
+
+        for (const line of remainingLines) {
+            if (line.trim().startsWith('^')) {
+                // If it's a speaker note, add it to the list (stripping the ^)
+                speakerNotes.push(line.trim().substring(1).trim());
+            } else {
+                // Otherwise, it's normal content
+                contentLines.push(line);
+            }
+        }
+
+        const content = contentLines.join('\n');
+
 		slides.push({
 			content: content,
+            speakerNotes: speakerNotes,
 			directives: directives,
 			startLine: start,
 			endLine: end,

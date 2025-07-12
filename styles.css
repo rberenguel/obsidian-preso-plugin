@@ -669,3 +669,34 @@
     max-width: 1280px;
     box-shadow: var(--shadow-l);
 }
+
+/* ------ Mobile styling ------ */
+
+@media (max-width: 600px) {
+  .slide-preview {
+        /* Override desktop size and position */
+        width: 160px !important; /* A much smaller, more reasonable width */
+        top: auto !important;
+        top: 15px !important;
+        right: 15px !important;
+        left: auto !important;
+    }
+    /* Force the modal to take up the full screen on mobile */
+    .mod.slides-modal {
+        width: 100%;
+        height: 100%;
+        max-width: 100vw;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    /* Ensure slide width doesn't create horizontal overflow */
+    .slides-modal .slide-preview {
+        width: 95vw !important; /* Override the width we force on mobile */
+    }
+
+    /* Reduce spacing between slides on mobile */
+    .slides-modal .slide-container {
+        margin-bottom: 20px;
+    }
+}

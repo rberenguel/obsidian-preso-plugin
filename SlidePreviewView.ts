@@ -21,7 +21,10 @@ export class SlidePreviewView {
 		this.floatingEl = this.containerEl.createEl("div", {
 			cls: "slide-preview",
 		});
-
+    const isMobile = (this.app as any).isMobile;
+    const minDimensions = isMobile 
+        ? { width: 160, height: 90 } 
+        : { width: 240, height: 135 };
 		interact(this.floatingEl)
 			.draggable({
 				inertia: true,
@@ -57,7 +60,7 @@ export class SlidePreviewView {
 						ratio: 16 / 9,
 					}),
 					interact.modifiers.restrictSize({
-						min: { width: 240, height: 135 },
+						min: minDimensions,
 					}),
 				],
 				listeners: {

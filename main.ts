@@ -21,23 +21,16 @@ export default class SlidesPlugin extends Plugin {
 		this.exporter = new Exporter(this.app);
 
 		this.addCommand({
-			id: "toggle-slide-preview",
-			name: "Toggle slide preview",
-			icon: "projector",
-			callback: () => {
-				const leaf = this.app.workspace.activeLeaf;
-				if (leaf?.view instanceof MarkdownView) {
-					if (
-						leaf.view.file &&
-						this.previewViews.has(leaf.view.file.path)
-					) {
-						this.previewViews.get(leaf.view.file.path)?.toggle();
-					} else {
-						this.activateSlides(leaf);
-					}
-				}
-			},
-		});
+      id: "toggle-slide-preview",
+      name: "Toggle slide preview",
+      icon: "projector",
+      callback: () => {
+        const leaf = this.app.workspace.activeLeaf;
+        if (leaf?.view instanceof MarkdownView) {
+            this.togglePreview(leaf);
+        }
+      },
+    });
 
 		this.addCommand({
 			id: "export-presentation-as-html",
@@ -91,6 +84,18 @@ export default class SlidesPlugin extends Plugin {
 		);
 	}
 
+private togglePreview(leaf: WorkspaceLeaf) {
+    if (leaf?.view instanceof MarkdownView) {
+      // Check if a preview exists for this file path before trying to toggle
+      if (this.previewViews.has(leaf.view.file?.path || "nope")) {
+        this.previewViews.get(leaf.view.file?.path || "nope")?.toggle();
+      } else {
+        // If no preview exists, create one
+        this.activateSlides(leaf);
+      }
+    }
+  }
+
 	onunload() {
 		this.previewViews.forEach((view) => view.destroy());
 		this.previewViews.clear();
@@ -113,18 +118,25 @@ export default class SlidesPlugin extends Plugin {
 	}
 
 	handleActiveLeafChange(leaf: WorkspaceLeaf | null) {
-		if (leaf?.view instanceof MarkdownView) {
-			const file = leaf.view.file;
-			if (file) {
-				const fileCache = this.app.metadataCache.getFileCache(file);
-				if (fileCache?.frontmatter?.preso) {
-					this.activateSlides(leaf);
-				} else {
-					this.deactivateSlides(leaf);
-				}
-			}
-		}
-	}
+    if (!(leaf?.view instanceof MarkdownView)) return;
+    const file = leaf.view.file;
+    if (!file) return;
+
+    const fileCache = this.app.metadataCache.getFileCache(file);
+    const isPreso = fileCache?.frontmatter?.preso;
+
+    if (isPreso) {
+        // Only auto-activate on desktop. On mobile, the user must use the command.
+        if (!(this.app as any).isMobile) {
+            if (!this.previewViews.has(file.path)) {
+                this.activateSlides(leaf);
+            }
+        }
+    } else {
+        // If it's NOT a presentation file, always deactivate any existing preview on any device.
+        this.deactivateSlides(leaf);
+    }
+  }
 
 	activateSlides(leaf: WorkspaceLeaf) {
 		const view = leaf.view as MarkdownView;
@@ -160,6 +172,10 @@ export default class SlidesPlugin extends Plugin {
 			}
 
 			const currentSlide = slides[currentSlideIndex];
+
+    if (currentSlide.speakerNotes.length > 0) {
+          console.log(`🎤 Speaker Notes (Slide ${currentSlideIndex + 1}):`, currentSlide.speakerNotes);
+      }
 
 			// --- State management for directives ---
 			let footerText: string | null = null;
