@@ -10,12 +10,12 @@ The result is heavily inspired by [Deckset](https://www.deckset.com/), and is no
 -   **Cursor-Driven Updates**: The preview automatically updates to the correct slide as you move your cursor through the editor.
 -   **Rich Layouts & Theming**: Supports special keywords in image alt-text (`bg`, `left`, `right`) to create advanced layouts like background images and split-screen views. You can also apply different visual themes via frontmatter.
 -   **Flexible Export Options**:
-    -   **HTML (with JS)**: Exports a self-contained HTML file with all styles and assets embedded. Navigation is handled by a small JavaScript snippet. [Example](https://www.mostlymaths.net/preso/examples/Test.html)
-    -   **HTML (CSS-only)**: Exports a fully functional, self-contained HTML presentation that works **without any JavaScript**. This is perfect for environments where scripts are disabled or for maximum portability. [Example](https://www.mostlymaths.net/preso/examples/Test.css-only.html)
+    -   **HTML (with JS)**: Exports a self-contained HTML file with all styles and assets embedded. Navigation is handled by a small JavaScript snippet. [Example](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Test.html)
+    -   **HTML (CSS-only)**: Exports a fully functional, self-contained HTML presentation that works **without any JavaScript**. This is perfect for environments where scripts are disabled or for maximum portability. [Example](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Test.css-only.html)
 
 ## TODO
 
-- [ ] Better mobile experience
+- [ ] Better mobile experience (don't use it on mobile yet please)
 - [ ] Speaker notes (next, important)
 - [ ] Footnotes
 - [ ] "Build slides" setting (lists item by item)
