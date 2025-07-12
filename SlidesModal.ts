@@ -34,21 +34,15 @@ export class SlidesModal extends Modal {
 
 		for (const [index, slide] of this.slides.entries()) {
 			// Update state
-			if (slide.directives["footer"]) {
-				footerText =
-					slide.directives["footer"] === "empty"
-						? null
-						: slide.directives["footer"];
-			}
-			if (slide.directives["footer-image"]) {
-				footerImage =
-					slide.directives["footer-image"] === "empty"
-						? null
-						: slide.directives["footer-image"];
-			}
-			if (slide.directives["slidenumbers"]) {
-				slideNumbers = slide.directives["slidenumbers"] === "true";
-			}
+			if ('footer' in slide.directives) {
+                footerText = slide.directives['footer'] === 'empty' ? null : slide.directives['footer'];
+            }
+            if ('footer-image' in slide.directives) {
+                footerImage = slide.directives['footer-image'] === 'empty' ? null : slide.directives['footer-image'];
+            }
+            if ('slidenumbers' in slide.directives) {
+                slideNumbers = slide.directives['slidenumbers'] === 'true';
+            }
 
 			// Determine extras for this specific slide
 			let showSlideNumberOnThisSlide = slideNumbers;

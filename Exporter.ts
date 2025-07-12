@@ -44,22 +44,15 @@ export class Exporter {
 
 		const slideHtmlPromises = allSlides.map(async (currentSlide, index) => {
 			// Update state based on current slide's directives
-			if (currentSlide.directives["footer"]) {
-				footerText =
-					currentSlide.directives["footer"] === "empty"
-						? null
-						: currentSlide.directives["footer"];
-			}
-			if (currentSlide.directives["footer-image"]) {
-				footerImage =
-					currentSlide.directives["footer-image"] === "empty"
-						? null
-						: currentSlide.directives["footer-image"];
-			}
-			if (currentSlide.directives["slidenumbers"]) {
-				slideNumbers =
-					currentSlide.directives["slidenumbers"] === "true";
-			}
+			if ('footer' in currentSlide.directives) {
+                footerText = currentSlide.directives['footer'] === 'empty' ? null : currentSlide.directives['footer'];
+            }
+            if ('footer-image' in currentSlide.directives) {
+                footerImage = currentSlide.directives['footer-image'] === 'empty' ? null : currentSlide.directives['footer-image'];
+            }
+            if ('slidenumbers' in currentSlide.directives) {
+                slideNumbers = currentSlide.directives['slidenumbers'] === 'true';
+            }
 
 			let showSlideNumberOnThisSlide = slideNumbers;
 			if (currentSlide.directives["slidenumbers"] === "false") {

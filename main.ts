@@ -167,23 +167,17 @@ export default class SlidesPlugin extends Plugin {
 			let slideNumbers = false;
 
 			for (let i = 0; i <= currentSlideIndex; i++) {
-				const slide = slides[i];
-				if (slide.directives["footer"]) {
-					footerText =
-						slide.directives["footer"] === "empty"
-							? null
-							: slide.directives["footer"];
-				}
-				if (slide.directives["footer-image"]) {
-					footerImage =
-						slide.directives["footer-image"] === "empty"
-							? null
-							: slide.directives["footer-image"];
-				}
-				if (slide.directives["slidenumbers"]) {
-					slideNumbers = slide.directives["slidenumbers"] === "true";
-				}
-			}
+        const slide = slides[i];
+        if ('footer' in slide.directives) {
+            footerText = slide.directives['footer'] === 'empty' ? null : slide.directives['footer'];
+        }
+        if ('footer-image' in slide.directives) {
+            footerImage = slide.directives['footer-image'] === 'empty' ? null : slide.directives['footer-image'];
+        }
+        if ('slidenumbers' in slide.directives) {
+            slideNumbers = slide.directives['slidenumbers'] === 'true';
+        }
+      }
 
 			let showSlideNumberOnThisSlide = slideNumbers;
 			if (currentSlide.directives["slidenumbers"] === "false") {

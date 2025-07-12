@@ -33,6 +33,7 @@ export function getSlidesWithBoundaries(rawContent: string): Slide[] {
 		for (let i = 0; i < slideLines.length; i++) {
 			const line = slideLines[i];
 			const match = line.match(directiveRegex);
+            console.log(match)
 			if (match) {
 				const key = match[1].toLowerCase();
 				const value = match[2].trim();
