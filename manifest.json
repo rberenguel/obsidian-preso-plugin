@@ -1,0 +1,10 @@
+{
+	"id": "preso",
+	"name": "Preso",
+	"version": "0.1.0",
+	"minAppVersion": "0.15.0",
+	"description": "A plugin to create and view slides in Obsidian.",
+	"author": "Ruben Berenguel",
+	"authorUrl": "https://www.mostlymaths.net",
+	"isDesktopOnly": false
+}
