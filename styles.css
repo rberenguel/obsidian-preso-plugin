@@ -128,6 +128,11 @@
 	text-transform: none !important;
 }
 
+.slide-preview mark {
+  padding: 0.1em 0.05em 0.0em 0.15em;
+  border-radius: 0.05em;
+}
+
 .slide-preview .copy-code-button {
 	display: none;
 }
@@ -561,7 +566,7 @@
 }
 
 .slide-preview.ostrich li::before {
-	content: "▶"; /* Right-pointing triangle character */
+	content: "⏵"; /* Right-pointing triangle character */
 	position: absolute;
 	left: 0;
 	font-size: 0.8em; /* Adjust size of the triangle */
@@ -656,51 +661,51 @@
 }
 
 .slides-modal .slide-container {
-    margin-bottom: 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+	margin-bottom: 30px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 /* Override the default floating preview styles when inside the modal */
 .slides-modal .slide-preview {
-    position: relative !important;
-    display: flex !important; /* Ensure it's visible, overriding the default 'none' */
-    top: auto !important;
-    right: auto !important;
-    transform: none !important;
-    width: 90%;
-    max-width: 1280px;
-    box-shadow: var(--shadow-l);
+	position: relative !important;
+	display: flex !important; /* Ensure it's visible, overriding the default 'none' */
+	top: auto !important;
+	right: auto !important;
+	transform: none !important;
+	width: 90%;
+	max-width: 1280px;
+	box-shadow: var(--shadow-l);
 }
 
 /* ------ Mobile styling ------ */
 
 @media (max-width: 600px) {
-  .slide-preview {
-        /* Override desktop size and position */
-        width: 160px !important; /* A much smaller, more reasonable width */
-        top: auto !important;
-        top: 15px !important;
-        right: 15px !important;
-        left: auto !important;
-    }
-    /* Force the modal to take up the full screen on mobile */
-    .mod.slides-modal {
-        width: 100%;
-        height: 100%;
-        max-width: 100vw;
-        max-height: 100vh;
-        border-radius: 0;
-    }
+	.slide-preview {
+		/* Override desktop size and position */
+		width: 160px !important; /* A much smaller, more reasonable width */
+		top: auto !important;
+		top: 15px !important;
+		right: 15px !important;
+		left: auto !important;
+	}
+	/* Force the modal to take up the full screen on mobile */
+	.mod.slides-modal {
+		width: 100%;
+		height: 100%;
+		max-width: 100vw;
+		max-height: 100vh;
+		border-radius: 0;
+	}
 
-    /* Ensure slide width doesn't create horizontal overflow */
-    .slides-modal .slide-preview {
-        width: 95vw !important; /* Override the width we force on mobile */
-    }
+	/* Ensure slide width doesn't create horizontal overflow */
+	.slides-modal .slide-preview {
+		width: 95vw !important; /* Override the width we force on mobile */
+	}
 
-    /* Reduce spacing between slides on mobile */
-    .slides-modal .slide-container {
-        margin-bottom: 20px;
-    }
+	/* Reduce spacing between slides on mobile */
+	.slides-modal .slide-container {
+		margin-bottom: 20px;
+	}
 }

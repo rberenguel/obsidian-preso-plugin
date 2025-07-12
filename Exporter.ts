@@ -1,6 +1,13 @@
 // Exporter.ts
 
-import { App, Notice, MarkdownView, TFile, Component, MarkdownRenderer } from "obsidian";
+import {
+	App,
+	Notice,
+	MarkdownView,
+	TFile,
+	Component,
+	MarkdownRenderer,
+} from "obsidian";
 import { SlidePreviewView } from "./SlidePreviewView";
 import { getSlidesWithBoundaries, Slide } from "./Parser";
 
@@ -81,27 +88,32 @@ const presentationCssCommon = `
         border-left-color: rgba(90, 90, 90, 0.4);
     }
     
-    /* --- Notes Toggle Button Style (shared) --- */
-    .nav-label.notes-toggle {
+    /* --- Notes & Overview Toggle Button Style (shared) --- */
+    .nav-label.notes-toggle, .nav-label.overview-toggle {
         position: absolute;
         left: 50%;
-        transform: translateX(-50%);
         width: 32px;
         height: 32px;
-        border: 2px solid rgba(0, 0, 0, 0.4);
-        border-radius: 50%;
+        border: 4px solid rgba(0, 0, 0, 0.4);
         color: rgba(0, 0, 0, 0.5);
     }
-
-    .nav-label.notes-toggle:hover {
-        color: rgba(255, 255, 255, 0.9);
-        border-color: rgba(255, 255, 255, 0.8);
+    .nav-label.notes-toggle {
+        transform: translateX(30px);
+        border-radius: 50%;
+    }
+     .nav-label.overview-toggle {
+        transform: translateX(-30px);
+        border-radius: 4px;
+    }
+    .nav-label.notes-toggle:hover, .nav-label.overview-toggle:hover {
+        color: rgba(0, 0, 0, 0.9);
+        border-color: rgba(0, 0, 0, 0.8);
     }
 
     .notes-content {
-        font-family: "Inter";
         font-size: 16px;
     }
+    .mini-slide-content { padding: 5px; font-size: 14px; font-family: var(--font-interface); color: var(--text-muted); overflow: hidden; }
 `;
 
 export class Exporter {
@@ -136,15 +148,22 @@ export class Exporter {
 		let slideNumbers = false;
 
 		const slidePromises = allSlides.map(async (currentSlide, index) => {
-			if ('footer' in currentSlide.directives) {
-                footerText = currentSlide.directives['footer'] === 'empty' ? null : currentSlide.directives['footer'];
-            }
-            if ('footer-image' in currentSlide.directives) {
-                footerImage = currentSlide.directives['footer-image'] === 'empty' ? null : currentSlide.directives['footer-image'];
-            }
-            if ('slidenumbers' in currentSlide.directives) {
-                slideNumbers = currentSlide.directives['slidenumbers'] === 'true';
-            }
+			if ("footer" in currentSlide.directives) {
+				footerText =
+					currentSlide.directives["footer"] === "empty"
+						? null
+						: currentSlide.directives["footer"];
+			}
+			if ("footer-image" in currentSlide.directives) {
+				footerImage =
+					currentSlide.directives["footer-image"] === "empty"
+						? null
+						: currentSlide.directives["footer-image"];
+			}
+			if ("slidenumbers" in currentSlide.directives) {
+				slideNumbers =
+					currentSlide.directives["slidenumbers"] === "true";
+			}
 
 			let showSlideNumberOnThisSlide = slideNumbers;
 			if (currentSlide.directives["slidenumbers"] === "false") {
@@ -176,14 +195,19 @@ export class Exporter {
 					: null,
 			};
 
-            const speakerNotesMarkdown = currentSlide.speakerNotes.join('\n');
+			const speakerNotesMarkdown = currentSlide.speakerNotes.join("\n");
 
 			const [slideHtml, speakerNotesHtml] = await Promise.all([
-                this.renderSlideToHtml(currentSlide.content, file.path, theme, extras),
-                this.renderMarkdownToHtml(speakerNotesMarkdown, file.path)
-            ]);
+				this.renderSlideToHtml(
+					currentSlide.content,
+					file.path,
+					theme,
+					extras,
+				),
+				this.renderMarkdownToHtml(speakerNotesMarkdown, file.path),
+			]);
 
-            return { slideHtml, speakerNotesHtml };
+			return { slideHtml, speakerNotesHtml };
 		});
 
 		const [combinedCss, renderedSlides] = await Promise.all([
@@ -191,22 +215,23 @@ export class Exporter {
 			Promise.all(slidePromises),
 		]);
 
-        const slidesHtml = renderedSlides.map(s => s.slideHtml);
-        const speakerNotesHtml = renderedSlides.map(s => s.speakerNotesHtml);
-
+		const slidesHtml = renderedSlides.map((s) => s.slideHtml);
+		const speakerNotesHtml = renderedSlides.map((s) => s.speakerNotesHtml);
 
 		const finalHtml = cssOnly
 			? this.createCssOnlyHtmlDocument(
 					file.basename,
+					allSlides,
 					slidesHtml,
-                    speakerNotesHtml,
+					speakerNotesHtml,
 					combinedCss,
 					bodyThemeClass,
 				)
 			: this.createHtmlDocument(
 					file.basename,
+					allSlides,
 					slidesHtml,
-                    speakerNotesHtml,
+					speakerNotesHtml,
 					combinedCss,
 					bodyThemeClass,
 				);
@@ -242,23 +267,32 @@ export class Exporter {
 		return cssStrings.join("\n");
 	}
 
-    private async renderMarkdownToHtml(markdownContent: string, sourcePath: string): Promise<string> {
-        if (!markdownContent) return "";
-        const tempContainer = createDiv();
-        const component = new Component();
-        try {
-            await MarkdownRenderer.render(this.app, markdownContent, tempContainer, sourcePath, component);
-            const allImages = Array.from(tempContainer.querySelectorAll("img"));
-            for (const img of allImages) {
-                if (img.src.startsWith("app://")) {
-                    img.src = await this.convertUrlToBase64(img.src);
-                }
-            }
-            return tempContainer.innerHTML;
-        } finally {
-            component.unload();
-        }
-    }
+	private async renderMarkdownToHtml(
+		markdownContent: string,
+		sourcePath: string,
+	): Promise<string> {
+		if (!markdownContent) return "";
+		const tempContainer = createDiv();
+		const component = new Component();
+		try {
+			await MarkdownRenderer.render(
+				this.app,
+				markdownContent,
+				tempContainer,
+				sourcePath,
+				component,
+			);
+			const allImages = Array.from(tempContainer.querySelectorAll("img"));
+			for (const img of allImages) {
+				if (img.src.startsWith("app://")) {
+					img.src = await this.convertUrlToBase64(img.src);
+				}
+			}
+			return tempContainer.innerHTML;
+		} finally {
+			component.unload();
+		}
+	}
 
 	private async renderSlideToHtml(
 		markdownContent: string,
@@ -312,96 +346,101 @@ export class Exporter {
 		return "";
 	}
 
-    private createCssOnlyHtmlDocument(title: string, slidesHtml: string[], speakerNotesHtml: string[], css: string, bodyAndThemeClasses: string): string {
-        const numSlides = slidesHtml.length;
-        const bodyClass = bodyAndThemeClasses.includes('theme-dark') ? 'theme-dark' : 'theme-light';
+	private createCssOnlyHtmlDocument(
+		title: string,
+		allSlides: Slide[],
+		slidesHtml: string[],
+		speakerNotesHtml: string[],
+		css: string,
+		bodyAndThemeClasses: string,
+	): string {
+		const numSlides = allSlides.length;
+		const bodyClass = bodyAndThemeClasses.includes("theme-dark")
+			? "theme-dark"
+			: "theme-light";
 
-        const radioInputs = slidesHtml.map((_, index) =>
-            `<input type="radio" name="slide" id="s${index + 1}" ${index === 0 ? 'checked' : ''}>`
-        ).join('\n');
+		const radioInputs = allSlides
+			.map(
+				(_, index) =>
+					`<input type="radio" name="slide" id="s${index + 1}" ${index === 0 ? "checked" : ""}>`,
+			)
+			.join("\n");
 
-        const slideMarkup = slidesHtml.map((slideOuterHtml, index) => {
-            if (!slideOuterHtml) return '';
-            const i = index + 1;
-            const prev = (i === 1) ? numSlides : i - 1;
-            const next = (i === numSlides) ? 1 : i + 1;
-            const prevLabel = `<label for="s${prev}" class="nav-label prev"></label>`;
-            const notesLabel = `<label for="notes-toggle" class="nav-label notes-toggle"></label>`;
-            const nextLabel = `<label for="s${next}" class="nav-label next"></label>`;
+		const slideMarkup = slidesHtml
+			.map((slideOuterHtml, index) => {
+				if (!slideOuterHtml) return "";
+				const i = index + 1;
+				const prev = i === 1 ? numSlides : i - 1;
+				const next = i === numSlides ? 1 : i + 1;
+				const prevLabel = `<label for="s${prev}" class="nav-label prev"></label>`;
+				const notesLabel = `<label for="notes-toggle" class="nav-label notes-toggle"></label>`;
+				const overviewLabel = `<label for="overview-toggle" class="nav-label overview-toggle"></label>`;
+				const nextLabel = `<label for="s${next}" class="nav-label next"></label>`;
+				const navigationDiv = `<div class="navigation">${prevLabel}${overviewLabel}${notesLabel}${nextLabel}</div>`;
+				const slideWithNav = slideOuterHtml.replace(
+					/<\/div>$/,
+					`${navigationDiv}</div>`,
+				);
+				return `<div class="slide-wrapper">${slideWithNav.replace('class="', 'class="is-visible ')}</div>`;
+			})
+			.join("\n");
 
-            const navigationDiv = `<div class="navigation">${prevLabel}${notesLabel}${nextLabel}</div>`;
-            const slideWithNav = slideOuterHtml.replace(/<\/div>$/, `${navigationDiv}</div>`);
-            return `<div class="slide-wrapper">${slideWithNav.replace('class="', 'class="is-visible ')}</div>`;
-        }).join('\n');
+		const speakerNotesMarkup = speakerNotesHtml
+			.map(
+				(notes, index) =>
+					`<div class="notes-content" id="notes-for-s${index + 1}">${notes}</div>`,
+			)
+			.join("\n");
 
-        const speakerNotesMarkup = speakerNotesHtml.map((notes, index) => 
-            `<div class="notes-content" id="notes-for-s${index + 1}">${notes}</div>`
-        ).join('\n');
+		const miniSlidesMarkup = allSlides
+			.map((slide, index) => {
+				return `<label for="s${index + 1}" class="mini-slide-wrapper"><div class="mini-slide-content">${slide.previewText}</div></label>`;
+			})
+			.join("\n");
 
-        let dynamicCss = '';
-        let dynamicNotesCss = '';
-        for (let i = 1; i <= numSlides; i++) {
-            dynamicCss += `#s${i}:checked ~ .slides-container .slide-wrapper:nth-of-type(${i}) { opacity: 1; pointer-events: auto; z-index: 1; }\n`;
-            dynamicNotesCss += `#s${i}:checked ~ .speaker-notes-pane .notes-content-wrapper #notes-for-s${i} { display: block; }\n`;
-        }
+		let dynamicCss = "";
+		let dynamicNotesCss = "";
+		for (let i = 1; i <= numSlides; i++) {
+			dynamicCss += `#s${i}:checked ~ .slides-container .slide-wrapper:nth-of-type(${i}) { opacity: 1; pointer-events: auto; z-index: 1; }\n`;
+			dynamicNotesCss += `#s${i}:checked ~ .speaker-notes-pane .notes-content-wrapper #notes-for-s${i} { display: block; }\n`;
+		}
 
-        const presentationCss = `
+		const presentationCss = `
             ${presentationCssCommon}
-            input[name="slide"], #notes-toggle { display: none; }
+            input[type="radio"], input[type="checkbox"] { display: none; }
             
-            .slides-container { 
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100vw; 
-                height: 100vh;
-                transition: width 0.3s ease-in-out;
-            }
-            #notes-toggle:checked ~ .slides-container { width: 80vw; }
+            /* --- Layout Panes --- */
+            .slides-overview-pane { position: fixed; left: 0; top: 0; height: 100vh; width: 0; background-color: rgba(0,0,0,0.2); overflow-y: auto; transition: width 0.3s ease-in-out; z-index: 20; padding-top: 10px; box-sizing: border-box; }
+            .slides-container { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; transition: width 0.3s ease-in-out, left 0.3s ease-in-out; }
+            .speaker-notes-pane { position: fixed; top: 0; right: 0; width: 0; height: 100vh; transition: width 0.3s ease-in-out; z-index: 10; display: flex; justify-content: center; align-items: center; }
+            
             ${dynamicCss}
+
+            /* --- Layout State Machine --- */
+            #overview-toggle:checked ~ .slides-overview-pane { width: 10vw; }
+            #overview-toggle:checked ~ .slides-container { left: 10vw; width: 90vw; }
+            #overview-toggle:checked ~ .slides-container .overview-toggle { background-color: rgba(0, 0, 0, 0.2); }
+
+            #notes-toggle:checked ~ .slides-container { width: 80vw; }
+            #notes-toggle:checked ~ .speaker-notes-pane { width: 20vw; }
+            #notes-toggle:checked ~ .slides-container .notes-toggle { background-color: rgba(0, 0, 0, 0.2); }
+
+            #overview-toggle:checked ~ #notes-toggle:checked ~ .slides-container { left: 10vw; width: 70vw; }
+
+            /* --- Mini Slide Previews (Simplified) --- */
+            .mini-slide-wrapper { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 10px auto; width: 90%; aspect-ratio: 16/9; cursor: pointer; border: 1px solid var(--background-modifier-border); border-radius: 4px; background-color: var(--background-primary); transition: border-color 0.2s; }
+            .mini-slide-wrapper:hover { border-color: var(--interactive-accent); }
+           
             
             /* --- Speaker Notes Styles --- */
-            .speaker-notes-pane {
-                position: fixed;
-                top: 0;
-                right: 0;
-                width: 0;
-                height: 100vh;
-                transition: width 0.3s ease-in-out;
-                z-index: 10;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-            #notes-toggle:checked ~ .speaker-notes-pane { width: 20vw; }
-
-            .notes-content-wrapper {
-                width: calc(100% - 2em);
-                height: calc(80vw * 0.98 * 9 / 16);
-                max-height: calc(98vh - 4em);
-                border-radius: 12px;
-                background-color: var(--background-secondary-alt, #1a1a1a);
-                padding: 2em;
-                box-sizing: border-box;
-                overflow-y: auto;
-                opacity: 0;
-                transition: opacity 0.3s ease-in-out;
-            }
-            #notes-toggle:checked ~ .speaker-notes-pane .notes-content-wrapper {
-                opacity: 1;
-            }
-
+            .notes-content-wrapper { width: calc(100% - 2em); height: calc(80vw * 0.98 * 9 / 16); max-height: calc(98vh - 4em); border-radius: 12px; background-color: var(--background-secondary-alt, #1a1a1a); padding: 2em; box-sizing: border-box; overflow-y: auto; opacity: 0; transition: opacity 0.3s ease-in-out; }
+            #notes-toggle:checked ~ .speaker-notes-pane .notes-content-wrapper { opacity: 1; }
             .speaker-notes-pane .notes-content { display: none; }
             .speaker-notes-pane h1, .speaker-notes-pane h2 { border: none; }
             ${dynamicNotesCss}
-            
-            #notes-toggle:checked ~ .slides-container .nav-label.notes-toggle {
-                background-color: rgba(255, 255, 255, 0.2);
-                color: rgba(255, 255, 255, 0.9);
-            }
         `;
 
-        return `<!DOCTYPE html>
+		return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -412,8 +451,12 @@ export class Exporter {
     </head>
     <body class="${bodyClass}">
         ${radioInputs}
+        <input type="checkbox" id="overview-toggle">
         <input type="checkbox" id="notes-toggle">
 
+        <div class="slides-overview-pane">
+            ${miniSlidesMarkup}
+        </div>
         <div class="slides-container">
             ${slideMarkup}
         </div>
@@ -424,82 +467,89 @@ export class Exporter {
         </div>
     </body>
     </html>`;
-    }
+	}
 
-    private createHtmlDocument(title: string, slidesHtml: string[], speakerNotesHtml: string[], css: string, bodyAndThemeClasses: string): string {
-        const bodyClass = bodyAndThemeClasses.includes('theme-dark') ? 'theme-dark' : 'theme-light';
-        
-        const slideMarkup = slidesHtml.map((slideOuterHtml, index) => {
-            if (!slideOuterHtml) return '';
-            const prevLabel = `<div class="nav-label prev"></div>`;
-            const notesLabel = `<div class="nav-label notes-toggle"></div>`;
-            const nextLabel = `<div class="nav-label next"></div>`;
-            const navigationDiv = `<div class="navigation">${prevLabel}${notesLabel}${nextLabel}</div>`;
-            const slideWithNav = slideOuterHtml.replace(/<\/div>$/, `${navigationDiv}</div>`);
-    
-            return `<div class="slide-wrapper ${index === 0 ? 'active' : ''}">
+	private createHtmlDocument(
+		title: string,
+		allSlides: Slide[],
+		slidesHtml: string[],
+		speakerNotesHtml: string[],
+		css: string,
+		bodyAndThemeClasses: string,
+	): string {
+		const bodyClass = bodyAndThemeClasses.includes("theme-dark")
+			? "theme-dark"
+			: "theme-light";
+
+		const slideMarkup = slidesHtml
+			.map((slideOuterHtml, index) => {
+				if (!slideOuterHtml) return "";
+				const prevLabel = `<div class="nav-label prev"></div>`;
+				const notesLabel = `<div class="nav-label notes-toggle"></div>`;
+				const overviewLabel = `<div class="nav-label overview-toggle"></div>`;
+				const nextLabel = `<div class="nav-label next"></div>`;
+				const navigationDiv = `<div class="navigation">${prevLabel}${overviewLabel}${notesLabel}${nextLabel}</div>`;
+				const slideWithNav = slideOuterHtml.replace(
+					/<\/div>$/,
+					`${navigationDiv}</div>`,
+				);
+
+				return `<div class="slide-wrapper ${index === 0 ? "active" : ""}">
                 ${slideWithNav.replace('class="', 'class="is-visible ')}
              </div>`;
-        }).join('\n');
+			})
+			.join("\n");
 
-        const speakerNotesMarkup = speakerNotesHtml.map((notes, index) => 
-            `<div class="notes-content" id="notes-for-slide-${index}">${notes}</div>`
-        ).join('\n');
-    
-        const presentationCss = `
+		const speakerNotesMarkup = speakerNotesHtml
+			.map(
+				(notes, index) =>
+					`<div class="notes-content" id="notes-for-slide-${index}">${notes}</div>`,
+			)
+			.join("\n");
+
+		const miniSlidesMarkup = allSlides
+			.map((slide, index) => {
+				return `<div class="mini-slide-wrapper" data-slide-index="${index}"><div class="mini-slide-content">${slide.previewText}</div></div>`;
+			})
+			.join("\n");
+
+		const presentationCss = `
             ${presentationCssCommon}
             body { display: flex; }
-            .slides-container {
-                width: 100vw;
-                height: 100vh;
-                position: relative;
-                transition: width 0.3s ease-in-out;
-            }
-            .slide-wrapper.active {
-                opacity: 1;
-                pointer-events: auto;
-                z-index: 1;
-            }
+            .slides-overview-pane { width: 0; height: 100vh; background-color: rgba(0,0,0,0.2); overflow-y: auto; transition: width 0.3s ease-in-out; z-index: 20; padding-top: 10px; box-sizing: border-box; flex-shrink: 0; }
+            .slides-container { width: 100vw; height: 100vh; position: relative; transition: width 0.3s ease-in-out; flex-shrink: 0; }
+            .speaker-notes-pane { width: 0; height: 100vh; transition: width 0.3s ease-in-out; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+            
+            .slide-wrapper.active { opacity: 1; pointer-events: auto; z-index: 1; }
+
+            /* --- Mini Slide Previews (Simplified) --- */
+            .mini-slide-wrapper { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 10px auto; width: 90%; aspect-ratio: 16/9; cursor: pointer; border: 1px solid var(--background-modifier-border); border-radius: 4px; background-color: var(--background-primary); transition: border-color 0.2s; }
+            .mini-slide-wrapper:hover { border-color: var(--interactive-accent); }
+            
 
             /* --- Speaker Notes Styles --- */
-            .speaker-notes-pane {
-                width: 0;
-                height: 100vh;
-                transition: width 0.3s ease-in-out;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                flex-shrink: 0;
-            }
-            .notes-content-wrapper {
-                width: calc(100% - 2em);
-                height: calc(80vw * 0.98 * 9 / 16);
-                max-height: calc(98vh - 4em);
-                border-radius: 12px;
-                background-color: var(--background-secondary-alt, #1a1a1a);
-                padding: 2em;
-                box-sizing: border-box;
-                overflow-y: auto;
-                opacity: 0;
-                transition: opacity 0.3s ease-in-out;
-            }
+            .notes-content-wrapper { width: calc(100% - 2em); height: calc(80vw * 0.98 * 9 / 16); max-height: calc(98vh - 4em); border-radius: 12px; background-color: var(--background-secondary-alt, #1a1a1a); padding: 2em; box-sizing: border-box; overflow-y: auto; opacity: 0; transition: opacity 0.3s ease-in-out; }
             .speaker-notes-pane .notes-content { display: none; }
             .speaker-notes-pane h1, .speaker-notes-pane h2 { border: none; }
 
             /* --- JS-driven states --- */
+            body.overview-visible .slides-overview-pane { width: 10vw; }
+            body.overview-visible .slides-container { width: 90vw; }
+            body.overview-visible .nav-label.overview-toggle { background-color: rgba(0, 0, 0, 0.2); }
+
             body.notes-visible .slides-container { width: 80vw; }
             body.notes-visible .speaker-notes-pane { width: 20vw; }
             body.notes-visible .notes-content-wrapper { opacity: 1; }
-            body.notes-visible .nav-label.notes-toggle {
-                background-color: rgba(0, 0, 0, 0.2);
-                color: rgba(255, 255, 255, 0.9);
-            }
+            body.notes-visible .nav-label.notes-toggle { background-color: rgba(0, 0, 0, 0.2); }
+
+            body.overview-visible.notes-visible .slides-container { width: 70vw; }
         `;
-    
-        const navigationJs = `
+
+		const navigationJs = `
             document.addEventListener('DOMContentLoaded', () => {
                 let current = 0;
                 let notesVisible = false;
+                let overviewVisible = false;
                 const slides = document.querySelectorAll('.slide-wrapper');
                 const allNotes = document.querySelectorAll('.notes-content');
                 const totalSlides = slides.length;
@@ -511,8 +561,11 @@ export class Exporter {
                 };
 
                 const showSlide = (index) => {
-                    if (index < 0 || index >= totalSlides) return;
-                    current = index;
+                    if (index < 0 || index >= totalSlides) {
+                        current = (index + totalSlides) % totalSlides;
+                    } else {
+                        current = index;
+                    }
                     slides.forEach((s, i) => s.classList.toggle('active', i === current));
                     if (notesVisible) {
                         showNotesForSlide(current);
@@ -529,17 +582,30 @@ export class Exporter {
                 });
 
                 document.body.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('next')) {
-                        showSlide(current + 1);
-                    } else if (e.target.classList.contains('prev')) {
-                        showSlide(current - 1);
-                    } else if (e.target.classList.contains('notes-toggle')) {
-                        notesVisible = !notesVisible;
-                        document.body.classList.toggle('notes-visible', notesVisible);
-                        if (notesVisible) {
-                            showNotesForSlide(current);
-                        } else {
-                            allNotes.forEach(el => el.style.display = 'none');
+                    const navTarget = e.target.closest('.nav-label');
+                    const miniSlideTarget = e.target.closest('.mini-slide-wrapper');
+
+                    if (navTarget) {
+                        if (navTarget.classList.contains('next')) {
+                            showSlide(current + 1);
+                        } else if (navTarget.classList.contains('prev')) {
+                            showSlide(current - 1);
+                        } else if (navTarget.classList.contains('notes-toggle')) {
+                            notesVisible = !notesVisible;
+                            document.body.classList.toggle('notes-visible', notesVisible);
+                            if (notesVisible) {
+                                showNotesForSlide(current);
+                            } else {
+                                allNotes.forEach(el => el.style.display = 'none');
+                            }
+                        } else if (navTarget.classList.contains('overview-toggle')) {
+                            overviewVisible = !overviewVisible;
+                            document.body.classList.toggle('overview-visible', overviewVisible);
+                        }
+                    } else if (miniSlideTarget) {
+                        const index = parseInt(miniSlideTarget.dataset.slideIndex, 10);
+                        if (!isNaN(index)) {
+                            showSlide(index);
                         }
                     }
                 });
@@ -547,8 +613,8 @@ export class Exporter {
                 showSlide(0);
             });
         `;
-    
-        return `<!DOCTYPE html>
+
+		return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -557,18 +623,13 @@ export class Exporter {
         <style>${css}${presentationCss}</style>
     </head>
     <body class="${bodyClass}">
-        <div class="slides-container">
-            ${slideMarkup}
-        </div>
-        <div class="speaker-notes-pane">
-            <div class="notes-content-wrapper">
-                ${speakerNotesMarkup}
-            </div>
-        </div>
+        <div class="slides-overview-pane">${miniSlidesMarkup}</div>
+        <div class="slides-container">${slideMarkup}</div>
+        <div class="speaker-notes-pane"><div class="notes-content-wrapper">${speakerNotesMarkup}</div></div>
         <script>${navigationJs}</script>
     </body>
     </html>`;
-    }
+	}
 
 	private async convertUrlToBase64(url: string): Promise<string> {
 		const response = await fetch(url);

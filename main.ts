@@ -21,16 +21,16 @@ export default class SlidesPlugin extends Plugin {
 		this.exporter = new Exporter(this.app);
 
 		this.addCommand({
-      id: "toggle-slide-preview",
-      name: "Toggle slide preview",
-      icon: "projector",
-      callback: () => {
-        const leaf = this.app.workspace.activeLeaf;
-        if (leaf?.view instanceof MarkdownView) {
-            this.togglePreview(leaf);
-        }
-      },
-    });
+			id: "toggle-slide-preview",
+			name: "Toggle slide preview",
+			icon: "projector",
+			callback: () => {
+				const leaf = this.app.workspace.activeLeaf;
+				if (leaf?.view instanceof MarkdownView) {
+					this.togglePreview(leaf);
+				}
+			},
+		});
 
 		this.addCommand({
 			id: "export-presentation-as-html",
@@ -84,17 +84,17 @@ export default class SlidesPlugin extends Plugin {
 		);
 	}
 
-private togglePreview(leaf: WorkspaceLeaf) {
-    if (leaf?.view instanceof MarkdownView) {
-      // Check if a preview exists for this file path before trying to toggle
-      if (this.previewViews.has(leaf.view.file?.path || "nope")) {
-        this.previewViews.get(leaf.view.file?.path || "nope")?.toggle();
-      } else {
-        // If no preview exists, create one
-        this.activateSlides(leaf);
-      }
-    }
-  }
+	private togglePreview(leaf: WorkspaceLeaf) {
+		if (leaf?.view instanceof MarkdownView) {
+			// Check if a preview exists for this file path before trying to toggle
+			if (this.previewViews.has(leaf.view.file?.path || "nope")) {
+				this.previewViews.get(leaf.view.file?.path || "nope")?.toggle();
+			} else {
+				// If no preview exists, create one
+				this.activateSlides(leaf);
+			}
+		}
+	}
 
 	onunload() {
 		this.previewViews.forEach((view) => view.destroy());
@@ -118,25 +118,25 @@ private togglePreview(leaf: WorkspaceLeaf) {
 	}
 
 	handleActiveLeafChange(leaf: WorkspaceLeaf | null) {
-    if (!(leaf?.view instanceof MarkdownView)) return;
-    const file = leaf.view.file;
-    if (!file) return;
+		if (!(leaf?.view instanceof MarkdownView)) return;
+		const file = leaf.view.file;
+		if (!file) return;
 
-    const fileCache = this.app.metadataCache.getFileCache(file);
-    const isPreso = fileCache?.frontmatter?.preso;
+		const fileCache = this.app.metadataCache.getFileCache(file);
+		const isPreso = fileCache?.frontmatter?.preso;
 
-    if (isPreso) {
-        // Only auto-activate on desktop. On mobile, the user must use the command.
-        if (!(this.app as any).isMobile) {
-            if (!this.previewViews.has(file.path)) {
-                this.activateSlides(leaf);
-            }
-        }
-    } else {
-        // If it's NOT a presentation file, always deactivate any existing preview on any device.
-        this.deactivateSlides(leaf);
-    }
-  }
+		if (isPreso) {
+			// Only auto-activate on desktop. On mobile, the user must use the command.
+			if (!(this.app as any).isMobile) {
+				if (!this.previewViews.has(file.path)) {
+					this.activateSlides(leaf);
+				}
+			}
+		} else {
+			// If it's NOT a presentation file, always deactivate any existing preview on any device.
+			this.deactivateSlides(leaf);
+		}
+	}
 
 	activateSlides(leaf: WorkspaceLeaf) {
 		const view = leaf.view as MarkdownView;
@@ -179,17 +179,23 @@ private togglePreview(leaf: WorkspaceLeaf) {
 			let slideNumbers = false;
 
 			for (let i = 0; i <= currentSlideIndex; i++) {
-        const slide = slides[i];
-        if ('footer' in slide.directives) {
-            footerText = slide.directives['footer'] === 'empty' ? null : slide.directives['footer'];
-        }
-        if ('footer-image' in slide.directives) {
-            footerImage = slide.directives['footer-image'] === 'empty' ? null : slide.directives['footer-image'];
-        }
-        if ('slidenumbers' in slide.directives) {
-            slideNumbers = slide.directives['slidenumbers'] === 'true';
-        }
-      }
+				const slide = slides[i];
+				if ("footer" in slide.directives) {
+					footerText =
+						slide.directives["footer"] === "empty"
+							? null
+							: slide.directives["footer"];
+				}
+				if ("footer-image" in slide.directives) {
+					footerImage =
+						slide.directives["footer-image"] === "empty"
+							? null
+							: slide.directives["footer-image"];
+				}
+				if ("slidenumbers" in slide.directives) {
+					slideNumbers = slide.directives["slidenumbers"] === "true";
+				}
+			}
 
 			let showSlideNumberOnThisSlide = slideNumbers;
 			if (currentSlide.directives["slidenumbers"] === "false") {

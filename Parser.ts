@@ -2,10 +2,11 @@
 
 export interface Slide {
 	content: string;
-    speakerNotes: string[];
+	speakerNotes: string[];
 	directives: Record<string, string>;
 	startLine: number;
 	endLine: number;
+	previewText: string;
 }
 
 export function getSlidesWithBoundaries(rawContent: string): Slide[] {
@@ -45,28 +46,50 @@ export function getSlidesWithBoundaries(rawContent: string): Slide[] {
 			}
 		}
 
-        const speakerNotes: string[] = [];
-        const contentLines: string[] = [];
-        const remainingLines = slideLines.slice(contentStartIndex);
+		const speakerNotes: string[] = [];
+		const contentLines: string[] = [];
+		const remainingLines = slideLines.slice(contentStartIndex);
 
-        for (const line of remainingLines) {
-            if (line.trim().startsWith('^')) {
-                // If it's a speaker note, add it to the list (stripping the ^)
-                speakerNotes.push(line.trim().substring(1).trim());
-            } else {
-                // Otherwise, it's normal content
-                contentLines.push(line);
-            }
-        }
+		for (const line of remainingLines) {
+			if (line.trim().startsWith("^")) {
+				// If it's a speaker note, add it to the list (stripping the ^)
+				speakerNotes.push(line.trim().substring(1).trim());
+			} else {
+				// Otherwise, it's normal content
+				contentLines.push(line);
+			}
+		}
 
-        const content = contentLines.join('\n');
+		const content = contentLines.join("\n");
+		let previewText = "...";
+		for (const line of contentLines) {
+			const trimmedLine = line.trim();
+			if (trimmedLine && !trimmedLine.startsWith("![")) {
+				let cleanedLine = trimmedLine
+					.replace(/^#+\s*/g, "")
+					.replace(/^[\*\-\+]\s*/g, "")
+					.replace(/^\d+\.\s*/g, "")
+					.replace(/_/g, "")
+					.replace(/\*/g, "")
+					.replace(/`/g, "")
+					.trim();
 
+				if (cleanedLine) {
+					previewText =
+						cleanedLine.length > 60
+							? cleanedLine.substring(0, 60) + "..."
+							: cleanedLine;
+					break;
+				}
+			}
+		}
 		slides.push({
 			content: content,
-            speakerNotes: speakerNotes,
+			speakerNotes: speakerNotes,
 			directives: directives,
 			startLine: start,
 			endLine: end,
+			previewText: previewText,
 		});
 	};
 
