@@ -173,10 +173,6 @@ private togglePreview(leaf: WorkspaceLeaf) {
 
 			const currentSlide = slides[currentSlideIndex];
 
-    if (currentSlide.speakerNotes.length > 0) {
-          console.log(`🎤 Speaker Notes (Slide ${currentSlideIndex + 1}):`, currentSlide.speakerNotes);
-      }
-
 			// --- State management for directives ---
 			let footerText: string | null = null;
 			let footerImage: string | null = null;
