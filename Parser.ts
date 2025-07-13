@@ -51,7 +51,7 @@ export function getSlidesWithBoundaries(rawContent: string): Slide[] {
 		const remainingLines = slideLines.slice(contentStartIndex);
 
 		for (const line of remainingLines) {
-			if (line.trim().startsWith("^")) {
+			if (line.startsWith("^")) {
 				// If it's a speaker note, add it to the list (stripping the ^)
 				speakerNotes.push(line.trim().substring(1).trim());
 			} else {

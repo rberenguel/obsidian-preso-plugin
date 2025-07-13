@@ -145,6 +145,36 @@
 
 /* 1. Original Typography Rules */
 
+/* Resize for links */
+.slide-preview .external-link {
+background-size: 0.5em;
+    padding-inline-end: 0.5em;
+    background-position-y: 0;
+}
+
+.slide-preview ul, ol {
+	margin-block-start: 0.1em;
+	margin-block-end: 0.1em;
+}
+
+.slide-preview hr {
+	width: 100%;
+	margin: 1rem;
+}
+
+.slide-preview code:not([class^="language-"]) {
+    font-size: 70%;
+    text-transform: none;
+    background-color: var(--background-modifier-border);
+    padding: 0.2em 0.3em 0.2em 0.3em;
+    border-radius: 0.2em;
+}
+
+.slide-preview ol {
+	padding-inline-start: 0;
+
+}
+
 .slide-preview h1 {
 	font-size: 24cqh;
 	margin-block-start: 0.2em;
@@ -608,12 +638,12 @@
 	padding-left: 0;
 }
 
-.slide-preview.ostrich li {
+.slide-preview.ostrich ul li {
 	position: relative;
 	padding-left: 1.2em; /* Make space for the custom bullet */
 }
 
-.slide-preview.ostrich li::before {
+.slide-preview.ostrich ul > li::before {
 	content: "⏵"; /* Right-pointing triangle character */
 	position: absolute;
 	left: 0;

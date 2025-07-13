@@ -97,7 +97,7 @@ export class SlidePreviewView {
 	async update(markdownContent: string, sourcePath: string) {
 		console.log("[Preso-Debug] --- Slide update triggered ---");
 		if (!this.floatingEl) {
-			console.error("[Preso-Debug] FATAL: floatingEl is not available.");
+			//console.error("[Preso-Debug] FATAL: floatingEl is not available.");
 			return;
 		}
 
@@ -111,16 +111,18 @@ export class SlidePreviewView {
 			"split-left",
 			"split-right",
 		);
-
+		console.log(markdownContent);
+		const hrProcessedMarkdown = markdownContent.replace(/^\/---$/gm, "---");
+		console.log(hrProcessedMarkdown);
 		const shadowHost = createDiv();
-		let finalMarkdown = markdownContent;
+		let finalMarkdown = hrProcessedMarkdown;
 
 		console.log(
 			"[Preso-Debug] 1. Initial markdown content:",
 			JSON.stringify(markdownContent),
 		);
 
-		const lines = markdownContent.split("\n");
+		const lines = hrProcessedMarkdown.split("\n");
 		const footnoteDefs = new Map<string, string>();
 		const contentLines: string[] = [];
 		const footnoteDefRegex = /^.*\[(.+?)\]:\s*(.*)/;
