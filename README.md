@@ -19,6 +19,7 @@ The result is heavily inspired by [Deckset](https://www.deckset.com/), and is no
 - [x] Visual buttons also in JS mode
 - [x] Speaker notes (next, important)
 - [x] Footnotes
+    - [ ] Footnotes in split slides are not split
 - [ ] "Build slides" setting (lists item by item)
 - [ ] Highlight code line(s)
 

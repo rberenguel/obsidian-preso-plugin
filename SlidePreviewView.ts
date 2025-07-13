@@ -151,6 +151,7 @@ export class SlidePreviewView {
 			let footnoteCounter = 1;
 
 			mainMarkdown.replace(footnoteRefRegex, (match, id) => {
+				console.log(match, id);
 				id = id.trim();
 				if (footnoteDefs.has(id) && !footnoteRefMap.has(id)) {
 					footnoteRefMap.set(id, footnoteCounter++);

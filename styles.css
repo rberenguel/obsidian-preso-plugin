@@ -144,6 +144,7 @@
 }
 
 /* 1. Original Typography Rules */
+
 .slide-preview h1 {
 	font-size: 24cqh;
 	margin-block-start: 0.2em;
@@ -206,19 +207,19 @@
 /* Automatic "Title and Content" Layout */
 /* Switches from centered to top-aligned when a slide has a heading and other content */
 .slide-preview.is-visible:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
-	) {
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *))
+	 {
 	justify-content: flex-start; /* Aligns content to the top */
 }
 
 /* Apply the top-alignment logic to the inner text containers for these layouts. */
 .layout-bg
 	.bg-content-wrapper:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	),
 .layout-split
 	.split-text-pane:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	) {
 	flex-direction: column;
 	justify-content: flex-start;
@@ -226,8 +227,7 @@
 
 /* Make headings full-width in this layout to ensure proper left alignment */
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
-	)
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *))
 	> :is(h1, h2, h3, h4, h5, h6) {
 	width: 100%;
 }
@@ -237,37 +237,37 @@
   a better visual hierarchy between the title and the body
 */
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h1 {
 	font-size: 14cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h2 {
 	font-size: 13cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h3 {
 	font-size: 12cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h4 {
 	font-size: 11cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h5 {
 	font-size: 10cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote)
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h6 {
 	font-size: 9cqh;
@@ -478,8 +478,9 @@
 
 /* Style the superscript reference in the main text to ensure it is small and raised */
 .slide-preview sup.footnote-ref {
+	filter: hue-rotate(90deg);
 	line-height: 0; /* Prevent it from affecting the main text's line height */
-	font-size: 0.75em;
+	font-size: 70%;
 	vertical-align: super;
 }
 
