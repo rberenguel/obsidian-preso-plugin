@@ -22,7 +22,7 @@ preso: ostrich
 
 # How does it work?
 
-Slides are separated by a Markdown rule separater, three dashes `---` on its own line.
+Slides are separated by a Markdown rule separator, three dashes `---` on its own line.
 
 **Paragraphs?** Just type.
 
