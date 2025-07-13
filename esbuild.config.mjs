@@ -15,16 +15,9 @@ if you want to view the source, please visit the github repository of this plugi
 const vaultPath = "/Users/ruben/Library/Mobile Documents/iCloud~md~obsidian/Documents/git-notes-in-icloud/.obsidian/plugins/preso";
 const prod = (process.argv[2] === "production");
 
-/**
- * Reads a CSS file, finds all font url() references,
- * and replaces them with Base64-encoded data URLs.
- * @param {string} sourceCssPath - Path to the source CSS file.
- * @param {string} destinationCssPath - Path to write the modified CSS file.
- */
 async function inlineFontsInCss(sourceCssPath, destinationCssPath) {
   try {
     let cssContent = await fs.readFile(sourceCssPath, "utf8");
-    // Regex to find url() declarations for common font types.
     const urlRegex = /url\((['"]?)([^'"()]+?\.(?:otf|ttf|woff|woff2))\1\)/g;
     const matches = Array.from(cssContent.matchAll(urlRegex));
 
@@ -57,7 +50,6 @@ async function inlineFontsInCss(sourceCssPath, destinationCssPath) {
 
     await fs.writeFile(destinationCssPath, cssContent);
   } catch (err) {
-    // Gracefully handle if styles.css does not exist.
     if (err.code !== 'ENOENT') throw err;
   }
 }
@@ -70,11 +62,8 @@ const copyPlugin = {
 
       console.log("Build succeeded, processing final files...");
       
-      // Copy essential files
       await fs.cp("main.js", path.join(vaultPath, "main.js"));
       await fs.cp("manifest.json", path.join(vaultPath, "manifest.json"));
-
-      // Process styles.css to inline fonts instead of just copying it
       await inlineFontsInCss("styles.css", path.join(vaultPath, "styles.css"));
       
       console.log("Files copied to vault.");
@@ -82,7 +71,7 @@ const copyPlugin = {
   },
 };
 
-const context = await esbuild.context({
+const buildOptions = {
 	banner: {
 		js: banner,
 	},
@@ -111,14 +100,16 @@ const context = await esbuild.context({
 	outfile: "main.js",
 	minify: prod,
 	plugins: [copyPlugin]
-});
+};
 
 if (prod) {
-	await context.rebuild();
-	process.exit(0);
+    // Use the simple 'build' API for production. It waits for plugins to finish.
+	await esbuild.build(buildOptions);
 } else {
-		await context.watch();
-	// Watch styles.css and trigger a rebuild on change
+    // Use the 'context' API for development and watch mode.
+	const context = await esbuild.context(buildOptions);
+	await context.watch();
+    
 	watch("styles.css", async (event, filename) => {
 		if (filename) {
 			console.log(`${filename} changed, rebuilding...`);
