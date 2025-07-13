@@ -92,9 +92,16 @@ export class SlidePreviewView {
 		}
 	}
 
-	async update(markdownContent: string, sourcePath: string) {
-		if (!this.floatingEl) return;
+	// In SlidePreviewView.ts
 
+	async update(markdownContent: string, sourcePath: string) {
+		console.log("[Preso-Debug] --- Slide update triggered ---");
+		if (!this.floatingEl) {
+			console.error("[Preso-Debug] FATAL: floatingEl is not available.");
+			return;
+		}
+
+		this.floatingEl.style.border = "";
 		this.floatingEl.innerHTML = "";
 		this.floatingEl.style.backgroundImage = "";
 		this.floatingEl.classList.remove(
@@ -106,14 +113,116 @@ export class SlidePreviewView {
 		);
 
 		const shadowHost = createDiv();
+		let finalMarkdown = markdownContent;
+
+		console.log(
+			"[Preso-Debug] 1. Initial markdown content:",
+			JSON.stringify(markdownContent),
+		);
+
+		const lines = markdownContent.split("\n");
+		const footnoteDefs = new Map<string, string>();
+		const contentLines: string[] = [];
+		const footnoteDefRegex = /^.*\[(.+?)\]:\s*(.*)/;
+
+		for (const line of lines) {
+			console.log("[Preso-Debug] 1.1 Lines:", line);
+			const match = line.match(footnoteDefRegex);
+			if (match) {
+				footnoteDefs.set(match[1].trim(), match[2].trim());
+			} else {
+				contentLines.push(line);
+			}
+		}
+		console.log(
+			"[Preso-Debug] 2. Parsed footnote definitions:",
+			footnoteDefs,
+		);
+
+		if (footnoteDefs.size > 0) {
+			const mainMarkdown = contentLines.join("\n");
+			console.log(
+				"[Preso-Debug] 3. Markdown content for reference parsing:",
+				JSON.stringify(mainMarkdown),
+			);
+
+			const footnoteRefRegex = /\[\^(.+?)\]/g;
+			const footnoteRefMap = new Map<string, number>();
+			let footnoteCounter = 1;
+
+			mainMarkdown.replace(footnoteRefRegex, (match, id) => {
+				id = id.trim();
+				if (footnoteDefs.has(id) && !footnoteRefMap.has(id)) {
+					footnoteRefMap.set(id, footnoteCounter++);
+				}
+				return match;
+			});
+			console.log(
+				"[Preso-Debug] 4. Map of found references to their order:",
+				footnoteRefMap,
+			);
+
+			if (footnoteRefMap.size > 0) {
+				finalMarkdown = mainMarkdown.replace(
+					footnoteRefRegex,
+					(match, id) => {
+						id = id.trim();
+						if (footnoteRefMap.has(id)) {
+							const index = footnoteRefMap.get(id)!;
+							return `<sup class="footnote-ref">${index}</sup>`;
+						}
+						return match;
+					},
+				);
+				console.log(
+					"[Preso-Debug] 5. Final markdown with <sup> tags:",
+					JSON.stringify(finalMarkdown),
+				);
+
+				const footnotesContainer = this.floatingEl.createEl("div", {
+					cls: "slide-footnotes-container",
+				});
+				const footnotesSection = footnotesContainer.createEl(
+					"section",
+					{
+						cls: "footnotes",
+					},
+				);
+				const footnotesList = footnotesSection.createEl("ol");
+				const sortedRefs = Array.from(footnoteRefMap.entries()).sort(
+					(a, b) => a[1] - b[1],
+				);
+
+				console.log("[Preso-Debug] 6. Building footnote list HTML...");
+				for (const [id, index] of sortedRefs) {
+					const content = footnoteDefs.get(id);
+					if (content) {
+						const listItem = footnotesList.createEl("li", {
+							attr: { id: `fn-${id}` },
+						});
+						await MarkdownRenderer.render(
+							this.app,
+							content,
+							listItem,
+							sourcePath,
+							this.component,
+						);
+					}
+				}
+			} else {
+				finalMarkdown = mainMarkdown;
+			}
+		}
+
 		await MarkdownRenderer.render(
 			this.app,
-			markdownContent,
+			finalMarkdown,
 			shadowHost,
 			sourcePath,
 			this.component,
 		);
 
+		// ... (Rest of the function for images, etc.)
 		const allImages = Array.from(shadowHost.querySelectorAll("img"));
 		const isSimpleFill =
 			allImages.length === 1 &&
@@ -124,19 +233,16 @@ export class SlidePreviewView {
 			this.floatingEl.style.backgroundImage = `url("${allImages[0].src}")`;
 			return;
 		}
-
 		const imageInfos = allImages.map((img) => ({
 			el: img,
 			match: img.alt.match(/^(bg|left|right)(?:\s+(.*))?$/),
 		}));
-
 		const bgImageInfos = imageInfos.filter(
 			(info) => info.match && info.match[1] === "bg",
 		);
 		const sideImageInfo = imageInfos.find(
 			(info) => info.match && ["left", "right"].includes(info.match[1]),
 		);
-
 		if (bgImageInfos.length > 0) {
 			this.floatingEl.classList.add("layout-bg");
 			const sliceContainer = this.floatingEl.createEl("div", {
@@ -184,7 +290,6 @@ export class SlidePreviewView {
 		} else {
 			this.floatingEl.append(...Array.from(shadowHost.childNodes));
 		}
-
 		if (this.floatingEl) {
 			this.floatingEl.style.opacity = "0.999";
 			requestAnimationFrame(() => {

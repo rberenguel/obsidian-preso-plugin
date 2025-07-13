@@ -129,8 +129,8 @@
 }
 
 .slide-preview mark {
-  padding: 0.1em 0.05em 0.0em 0.15em;
-  border-radius: 0.05em;
+	padding: 0.1em 0.05em 0em 0.15em;
+	border-radius: 0.05em;
 }
 
 .slide-preview .copy-code-button {
@@ -442,6 +442,53 @@
 	)
 	:is(h6) {
 	font-size: 5cqh;
+}
+
+/* --- FOOTNOTES STYLING --- */
+.slide-preview .slide-footnotes-container {
+	position: absolute;
+	bottom: 5cqh; /* Position just above the slide extras container */
+	left: 4cqw;
+	right: 4cqw;
+	z-index: 50;
+	pointer-events: none; /* Let clicks pass through the container itself */
+	max-height: 25%;
+	overflow-y: auto;
+}
+
+.slide-preview .slide-footnotes-container > * {
+	pointer-events: all; /* But allow interaction with the content (e.g., scrolling) */
+}
+
+.slide-preview .footnotes {
+	backdrop-filter: invert(0.1);
+	padding-top: 0.05em;
+	border-radius: 0.05em;
+}
+
+.slide-preview .footnotes ol {
+	margin: 0;
+	padding-left: 2.5cqw;
+}
+
+.slide-preview .footnotes li {
+	margin-block-start: 0.2em;
+	margin-block-end: 0.2em;
+}
+
+/* Style the superscript reference in the main text to ensure it is small and raised */
+.slide-preview sup.footnote-ref {
+	line-height: 0; /* Prevent it from affecting the main text's line height */
+	font-size: 0.75em;
+	vertical-align: super;
+}
+
+.slide-preview .footnotes * {
+	font-size: 5cqh !important;
+}
+
+.slide-preview .footnotes li::before {
+	content: none !important;
 }
 
 /* --- THEME: serious --- */
