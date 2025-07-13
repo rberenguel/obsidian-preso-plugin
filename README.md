@@ -18,7 +18,7 @@ The result is heavily inspired by [Deckset](https://www.deckset.com/), and is no
 - [x] Better mobile experience (don't use it on mobile yet please)
 - [x] Visual buttons also in JS mode
 - [x] Speaker notes (next, important)
-- [ ] Footnotes
+- [x] Footnotes
 - [ ] "Build slides" setting (lists item by item)
 - [ ] Highlight code line(s)
 
