@@ -16,6 +16,9 @@ The result is heavily inspired by [Deckset](https://www.deckset.com/), and is no
     -   **HTML (with JS)**: Exports a self-contained HTML file with all styles and assets embedded. Navigation is handled by a small JavaScript snippet. [Example](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Test.html)
     -   **HTML (CSS-only)**: Exports a fully functional, self-contained HTML presentation that works **without any JavaScript**. This is perfect for environments where scripts are disabled or for maximum portability. [Example](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Test.css-only.html)
 
+> [!WARNING]
+> This is still a very early release. Things might change. Use the example slides mentioned above as a guide on usage: all functionality there will stay with minor modifications.
+
 ## TODO
 
 - [x] Better mobile experience (don't use it on mobile yet please)
