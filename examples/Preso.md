@@ -5,16 +5,18 @@ preso: ostrich
 
 # Preso[^fn1]
 
-[fn1]: An Obsidian plugin by **rberenguel**
+[fn1]: An Obsidian plugin by [rberenguel](https://www.mostlymaths.net)
 
 ---
 
-# What is preso?
+# What is preso[^getpreso]?
 
-- Lightweight plugin to create presentations in `Markdown`  in Obsidian
+- Lightweight plugin to create presentations in `Markdown`  in [Obsidian](https://obsidian.md/)
 - Inspired by the way [Deckset](https://www.deckset.com/) presentations are built
 - Works in Obsidian **desktop** and obsidian **mobile**
-- Can **export** presentations as HTML+CSS+JS or HTML+CSS only
+- Can **export** presentations as `HTML+CSS+JS` or `HTML+CSS` only
+
+[getpreso]: You can find the plugin [here](https://github.com/rberenguel/obsidian-preso-plugin)
 
 ---
 

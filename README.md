@@ -2,13 +2,16 @@
 
 Preso is a plugin for creating and previewing presentations directly within Obsidian. It provides a live, in-editor preview of your slides, allowing for a fast and fluid content creation workflow.
 
+> [!TIP]
+> You can find the _tutorial slides_ here: [HTTP+CSS+JS](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Test.html), [HTTP+CSS](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Preso.css-only.html), and the source for these slides is in the `examples` folder.
+
 The result is heavily inspired by [Deckset](https://www.deckset.com/), and is not my first time writing some sort of partial version ([awkrdeck](https://github.com/rberenguel/awkrdeck/tree/master), [haskset](https://github.com/rberenguel/haskset)) .
 
 ## Features
 
--   **Live Slide Preview**: A floating, resizable, and draggable window shows a real-time preview of your current slide.
+-   **Live Slide Preview**: A floating, resizable, and draggable window shows a real-time preview of your current slide. Also available on mobile (but disabled by default).
 -   **Cursor-Driven Updates**: The preview automatically updates to the correct slide as you move your cursor through the editor.
--   **Rich Layouts & Theming**: Supports special keywords in image alt-text (`bg`, `left`, `right`) to create advanced layouts like background images and split-screen views. You can also apply different visual themes via frontmatter.
+-   **Rich Layouts & Theming**: Supports special keywords in image alt-text (`bg`, `left`, `right`) to create advanced layouts like background images and split-screen views. You can also apply different visual themes via frontmatter (Note: The only theme I use is Ostrich, so other themes might have CSS glitches for now).
 -   **Flexible Export Options**:
     -   **HTML (with JS)**: Exports a self-contained HTML file with all styles and assets embedded. Navigation is handled by a small JavaScript snippet. [Example](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Test.html)
     -   **HTML (CSS-only)**: Exports a fully functional, self-contained HTML presentation that works **without any JavaScript**. This is perfect for environments where scripts are disabled or for maximum portability. [Example](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Test.css-only.html)
@@ -22,6 +25,7 @@ The result is heavily inspired by [Deckset](https://www.deckset.com/), and is no
     - [ ] Footnotes in split slides are not split
 - [ ] "Build slides" setting (lists item by item)
 - [ ] Highlight code line(s)
+- [ ] Improve other themes
 
 ## How to Use
 
