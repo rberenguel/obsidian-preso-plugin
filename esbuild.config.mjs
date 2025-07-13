@@ -12,8 +12,8 @@ if you want to view the source, please visit the github repository of this plugi
 */
 `;
 
-const vaultPath = "/Users/ruben/Library/Mobile Documents/iCloud~md~obsidian/Documents/git-notes-in-icloud/.obsidian/plugins/preso";
 const prod = (process.argv[2] === "production");
+const outputDir = prod ? "dist" : "/Users/ruben/Library/Mobile Documents/iCloud~md~obsidian/Documents/git-notes-in-icloud/.obsidian/plugins/preso";
 
 async function inlineFontsInCss(sourceCssPath, destinationCssPath) {
   try {
@@ -22,7 +22,7 @@ async function inlineFontsInCss(sourceCssPath, destinationCssPath) {
     const matches = Array.from(cssContent.matchAll(urlRegex));
 
     if (matches.length > 0) {
-      console.log("Inlining fonts in styles.css...");
+      console.log(`Inlining fonts into ${destinationCssPath}...`);
     }
 
     for (const match of matches) {
@@ -54,59 +54,46 @@ async function inlineFontsInCss(sourceCssPath, destinationCssPath) {
   }
 }
 
-const copyPlugin = {
-  name: "copy-to-vault",
-  setup: (build) => {
-    build.onEnd(async (result) => {
-      if (result.errors.length > 0) return;
+const buildPlugin = {
+    name: "build-and-copy",
+    setup: (build) => {
+        build.onEnd(async (result) => {
+            if (result.errors.length > 0) return;
+            console.log("Build succeeded, processing static files...");
 
-      console.log("Build succeeded, processing final files...");
-      
-      await fs.cp("main.js", path.join(vaultPath, "main.js"));
-      await fs.cp("manifest.json", path.join(vaultPath, "manifest.json"));
-      await inlineFontsInCss("styles.css", path.join(vaultPath, "styles.css"));
-      
-      console.log("Files copied to vault.");
-    });
-  },
+            await fs.cp("manifest.json", path.join(outputDir, "manifest.json"));
+            await inlineFontsInCss("styles.css", path.join(outputDir, "styles.css"));
+            
+            console.log(`✅ Files ready in ${outputDir}`);
+        });
+    },
 };
 
 const buildOptions = {
-	banner: {
-		js: banner,
-	},
+	banner: { js: banner },
 	entryPoints: ["main.ts"],
 	bundle: true,
 	external: [
-		"obsidian",
-		"electron",
-		"@codemirror/autocomplete",
-		"@codemirror/collab",
-		"@codemirror/commands",
-		"@codemirror/language",
-		"@codemirror/lint",
-		"@codemirror/search",
-		"@codemirror/state",
-		"@codemirror/view",
-		"@lezer/common",
-		"@lezer/highlight",
-		"@lezer/lr",
-		...builtins],
+		"obsidian", "electron", "@codemirror/autocomplete", "@codemirror/collab",
+		"@codemirror/commands", "@codemirror/language", "@codemirror/lint",
+		"@codemirror/search", "@codemirror/state", "@codemirror/view",
+		"@lezer/common", "@lezer/highlight", "@lezer/lr", ...builtins
+	],
 	format: "cjs",
 	target: "es2018",
 	logLevel: "info",
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
-	outfile: "main.js",
+	outfile: path.join(outputDir, "main.js"), // Output to the correct directory
 	minify: prod,
-	plugins: [copyPlugin]
+	plugins: [buildPlugin]
 };
 
 if (prod) {
-    // Use the simple 'build' API for production. It waits for plugins to finish.
+    await fs.rm("dist", { recursive: true, force: true });
+    await fs.mkdir("dist", { recursive: true });
 	await esbuild.build(buildOptions);
 } else {
-    // Use the 'context' API for development and watch mode.
 	const context = await esbuild.context(buildOptions);
 	await context.watch();
     

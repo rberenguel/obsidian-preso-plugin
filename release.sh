@@ -15,36 +15,30 @@ VERSION=$1
 ARCHIVE_NAME="preso"
 DOWNLOADS_DIR="$HOME/Downloads"
 RELEASE_ZIP_PATH="$DOWNLOADS_DIR/$ARCHIVE_NAME.zip"
+BUILD_DIR="dist"
 
 echo "📦 Starting release process for version $VERSION..."
 
-# 1. Update version numbers in package.json, manifest.json and versions.json
-# The `npm version` command updates package.json and package-lock.json.
-# It also runs the `version` script from package.json, which you've configured
-# to execute `version-bump.mjs`.
+# 1. Update version numbers
 echo "Updating version numbers to $VERSION..."
 npm version $VERSION --no-git-tag-version --allow-same-version
 
-# 2. Build the plugin using your existing build command.
+# 2. Build the plugin. This will create the 'dist' directory with all final files.
 echo "Building the plugin..."
 npm run build
 
-# 3. Create the zip archive for the release.
-echo "Creating zip archive at $RELEASE_ZIP_PATH..."
+# 3. Create the zip archive for the release from the build directory.
+echo "Creating zip archive at $RELEASE_ZIP_PATH from '$BUILD_DIR' directory..."
 
-# Create a temporary directory to avoid including other files from your repo.
-TMP_DIR=$(mktemp -d)
+if [ ! -d "$BUILD_DIR" ]; then
+    echo "Error: Build directory '$BUILD_DIR' not found. Build may have failed."
+    exit 1
+fi
 
-# Copy the release files to the temporary directory.
-cp main.js styles.css manifest.json "$TMP_DIR"
+# Create the zip file from the contents of the 'dist' directory.
+(cd "$BUILD_DIR" && zip -r "$RELEASE_ZIP_PATH" .)
 
-# Create the zip file from the contents of the temporary directory.
-(cd "$TMP_DIR" && zip -r "$RELEASE_ZIP_PATH" .)
-
-# 4. Clean up the temporary directory.
-rm -rf "$TMP_DIR"
-
-# 5. Commit the version changes and create a git tag.
+# 4. Commit the version changes and create a git tag.
 echo "Committing version changes and tagging..."
 git add manifest.json versions.json package.json package-lock.json
 git commit -m "chore(release): v$VERSION"
