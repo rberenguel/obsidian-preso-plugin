@@ -501,6 +501,10 @@ export class Exporter {
     </html>`;
 	}
 
+	// Exporter.ts
+
+	// ... (keep the rest of the file as is)
+
 	private createHtmlDocument(
 		title: string,
 		allSlides: Slide[],
@@ -516,6 +520,7 @@ export class Exporter {
 		const slideMarkup = slidesHtml
 			.map((slideOuterHtml, index) => {
 				if (!slideOuterHtml) return "";
+				// Navigation controls will be dynamically shown or hidden by the presenter view
 				const prevLabel = `<div class="nav-label prev"></div>`;
 				const notesLabel = `<div class="nav-label notes-toggle"></div>`;
 				const overviewLabel = `<div class="nav-label overview-toggle"></div>`;
@@ -547,102 +552,185 @@ export class Exporter {
 
 		const presentationCss = `
             ${presentationCssCommon}
-            body { display: flex; }
+            /* Main view layout */
+            #main-view { display: flex; width: 100%; height: 100%; }
             .slides-overview-pane { width: 0; height: 100vh; background-color: rgba(0,0,0,0.2); overflow-y: auto; transition: width 0.3s ease-in-out; z-index: 20; padding-top: 10px; box-sizing: border-box; flex-shrink: 0; }
             .slides-container { width: 100vw; height: 100vh; position: relative; transition: width 0.3s ease-in-out; flex-shrink: 0; }
             .speaker-notes-pane { width: 0; height: 100vh; transition: width 0.3s ease-in-out; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
-            
             .slide-wrapper.active { opacity: 1; pointer-events: auto; z-index: 1; }
-
-            /* --- Mini Slide Previews (Simplified) --- */
             .mini-slide-wrapper { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 10px auto; width: 90%; aspect-ratio: 16/9; cursor: pointer; border: 1px solid var(--background-modifier-border); border-radius: 4px; background-color: var(--background-primary); transition: border-color 0.2s; }
             .mini-slide-wrapper:hover { border-color: var(--interactive-accent); }
-            
-
-            /* --- Speaker Notes Styles --- */
             .notes-content-wrapper { width: calc(100% - 2em); height: calc(80vw * 0.98 * 9 / 16); max-height: calc(98vh - 4em); border-radius: 12px; background-color: var(--background-secondary-alt, #1a1a1a); padding: 2em; box-sizing: border-box; overflow-y: auto; opacity: 0; transition: opacity 0.3s ease-in-out; }
             .speaker-notes-pane .notes-content { display: none; }
             .speaker-notes-pane h1, .speaker-notes-pane h2 { border: none; }
-
-            /* --- JS-driven states --- */
             body.overview-visible .slides-overview-pane { width: 10vw; }
             body.overview-visible .slides-container { width: 90vw; }
             body.overview-visible .nav-label.overview-toggle { background-color: rgba(0, 0, 0, 0.2); }
-
             body.notes-visible .slides-container { width: 80vw; }
             body.notes-visible .speaker-notes-pane { width: 20vw; }
             body.notes-visible .notes-content-wrapper { opacity: 1; }
             body.notes-visible .nav-label.notes-toggle { background-color: rgba(0, 0, 0, 0.2); }
-
             body.overview-visible.notes-visible .slides-container { width: 70vw; }
+            
+            /* --- Presenter View Styles --- */
+            #presenter-view { width: 100vw; height: 100vh; background-color: var(--background-secondary, #282828); color: var(--text-normal); font-family: sans-serif; display: none; }
+            .presenter-main { flex: 3; display: flex; flex-direction: column; padding: 20px; gap: 20px; }
+            .presenter-sidebar { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px; border-left: 1px solid var(--background-modifier-border); }
+            
+            /* ✨ UI Refinement: Removed borders and backgrounds for a cleaner look */
+            .presenter-current-slide-container { flex: 2; display: flex; }
+            .presenter-notes-container { flex: 1; padding: 10px; overflow-y: auto; }
+            .presenter-next-slide-container, .presenter-prev-slide-container { flex: 1; display: flex; flex-direction: column; }
+            
+            .presenter-notes-container h3 { margin:0; padding-bottom:10px; border-bottom:1px solid var(--background-modifier-border); }
+            .presenter-sidebar h4 { margin: 5px; padding-bottom: 5px; }
+            .presenter-slide-host { flex: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+            .presenter-slide-host > .slide-wrapper { position: relative; opacity: 1; pointer-events: auto; }
+            .presenter-slide-host .slide-preview { border: none; box-shadow: none; width: 100%; height: auto; max-width: none; max-height: none; transform: scale(0.97); }
+            .presenter-slide-host .navigation { display: none !important; }
+            .presenter-controls { display: flex; gap: 10px; }
+            .presenter-controls button { flex: 1; padding: 15px; font-size: 18px; cursor: pointer; }
         `;
 
 		const navigationJs = `
             document.addEventListener('DOMContentLoaded', () => {
+                const isPresenter = window.name === 'preso-presenter';
+                const channel = new BroadcastChannel('preso-sync-channel');
+                let presenterWindow = null;
+                
                 let current = 0;
                 let notesVisible = false;
                 let overviewVisible = false;
-                const slides = document.querySelectorAll('.slide-wrapper');
-                const allNotes = document.querySelectorAll('.notes-content');
+
+                const slides = Array.from(document.querySelectorAll('.slide-wrapper'));
+                const allNotes = Array.from(document.querySelectorAll('.notes-content'));
                 const totalSlides = slides.length;
 
+                // --- Core Functions ---
                 const showNotesForSlide = (index) => {
                     allNotes.forEach((el, i) => {
                         el.style.display = i === index ? 'block' : 'none';
                     });
                 };
-
+                
                 const showSlide = (index) => {
-                    if (index < 0 || index >= totalSlides) {
-                        current = (index + totalSlides) % totalSlides;
-                    } else {
-                        current = index;
-                    }
+                    current = (index + totalSlides) % totalSlides;
                     slides.forEach((s, i) => s.classList.toggle('active', i === current));
-                    if (notesVisible) {
-                        showNotesForSlide(current);
+                    if (notesVisible) showNotesForSlide(current);
+                    if (!isPresenter) broadcastState(); // Main window broadcasts its new state
+                };
+                
+                const broadcastState = () => {
+                    if (isPresenter || !presenterWindow || presenterWindow.closed) return;
+
+                    const prevIndex = (current - 1 + totalSlides) % totalSlides;
+                    const nextIndex = (current + 1) % totalSlides;
+                    
+                    const message = {
+                        type: 'state-update',
+                        currentIndex: current,
+                        currentSlideHtml: slides[current].innerHTML,
+                        prevSlideHtml: slides[prevIndex].innerHTML,
+                        nextSlideHtml: slides[nextIndex].innerHTML,
+                        currentNotesHtml: allNotes[current].innerHTML,
+                    };
+                    channel.postMessage(message);
+                };
+                
+                // --- Event Handlers & Logic ---
+                channel.onmessage = (event) => {
+                    const msg = event.data;
+                    if (isPresenter) return; // Presenter only sends, doesn't receive commands
+                    
+                    if (msg.type === 'command') {
+                        if (msg.action === 'next') showSlide(current + 1);
+                        else if (msg.action === 'prev') showSlide(current - 1);
+                        else if (msg.action === 'presenter-ready') {
+                            presenterWindow = window.open('', 'preso-presenter'); // Re-establish link
+                            broadcastState();
+                        } else if (msg.action === 'presenter-closing') {
+                            presenterWindow = null;
+                        }
                     }
                 };
+                
+                if (isPresenter) {
+                    // --- Presenter Window Logic ---
+                    document.getElementById('main-view').style.display = 'none';
+                    document.getElementById('presenter-view').style.display = 'flex';
+                    
+                    const currentHost = document.getElementById('presenter-current-slide');
+                    const nextHost = document.getElementById('presenter-next-slide');
+                    const prevHost = document.getElementById('presenter-prev-slide');
+                    const notesHost = document.getElementById('presenter-notes');
 
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'PageDown') {
-                        showSlide(current + 1);
-                    } 
-                    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
-                        showSlide(current - 1);
-                    }
-                });
+                    document.getElementById('presenter-next-btn').onclick = () => channel.postMessage({ type: 'command', action: 'next' });
+                    document.getElementById('presenter-prev-btn').onclick = () => channel.postMessage({ type: 'command', action: 'prev' });
 
-                document.body.addEventListener('click', (e) => {
-                    const navTarget = e.target.closest('.nav-label');
-                    const miniSlideTarget = e.target.closest('.mini-slide-wrapper');
+                    document.addEventListener('keydown', (e) => {
+                        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+                            e.preventDefault();
+                            channel.postMessage({ type: 'command', action: 'next' });
+                        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+                            e.preventDefault();
+                            channel.postMessage({ type: 'command', action: 'prev' });
+                        }
+                    });
 
-                    if (navTarget) {
-                        if (navTarget.classList.contains('next')) {
-                            showSlide(current + 1);
-                        } else if (navTarget.classList.contains('prev')) {
-                            showSlide(current - 1);
-                        } else if (navTarget.classList.contains('notes-toggle')) {
-                            notesVisible = !notesVisible;
-                            document.body.classList.toggle('notes-visible', notesVisible);
-                            if (notesVisible) {
-                                showNotesForSlide(current);
+                    channel.onmessage = (event) => {
+                        const msg = event.data;
+                        if(msg.type !== 'state-update') return;
+                        currentHost.innerHTML = msg.currentSlideHtml;
+                        nextHost.innerHTML = msg.nextSlideHtml;
+                        prevHost.innerHTML = msg.prevSlideHtml;
+                        notesHost.innerHTML = msg.currentNotesHtml;
+                    };
+                    
+                    window.addEventListener('beforeunload', () => channel.postMessage({ type: 'command', action: 'presenter-closing' }));
+                    setTimeout(() => channel.postMessage({ type: 'command', action: 'presenter-ready' }), 200);
+
+                } else {
+                    // --- Main Window Logic ---
+                    document.addEventListener('keydown', (e) => {
+                        if (e.key === 'p' || e.key === 'P') {
+                            e.preventDefault();
+                            if (!presenterWindow || presenterWindow.closed) {
+                                presenterWindow = window.open(window.location.href, 'preso-presenter', 'width=1200,height=800,menubar=no,toolbar=no,location=no,status=no');
                             } else {
-                                allNotes.forEach(el => el.style.display = 'none');
+                                presenterWindow.focus();
                             }
-                        } else if (navTarget.classList.contains('overview-toggle')) {
-                            overviewVisible = !overviewVisible;
-                            document.body.classList.toggle('overview-visible', overviewVisible);
                         }
-                    } else if (miniSlideTarget) {
-                        const index = parseInt(miniSlideTarget.dataset.slideIndex, 10);
-                        if (!isNaN(index)) {
-                            showSlide(index);
-                        }
-                    }
-                });
+                        else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'PageDown') showSlide(current + 1);
+                        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') showSlide(current - 1);
+                    });
 
-                showSlide(0);
+                    document.body.addEventListener('click', (e) => {
+                        const navTarget = e.target.closest('.nav-label');
+                        const miniSlideTarget = e.target.closest('.mini-slide-wrapper');
+                        if (!navTarget && !miniSlideTarget) return;
+
+                        if (navTarget) {
+                            if (navTarget.classList.contains('next')) showSlide(current + 1);
+                            else if (navTarget.classList.contains('prev')) showSlide(current - 1);
+                            else if (navTarget.classList.contains('notes-toggle')) {
+                                notesVisible = !notesVisible;
+                                document.body.classList.toggle('notes-visible', notesVisible);
+                                if (notesVisible) showNotesForSlide(current);
+                            } else if (navTarget.classList.contains('overview-toggle')) {
+                                overviewVisible = !overviewVisible;
+                                document.body.classList.toggle('overview-visible', overviewVisible);
+                            }
+                        } else if (miniSlideTarget) {
+                            const index = parseInt(miniSlideTarget.dataset.slideIndex, 10);
+                            if (!isNaN(index)) showSlide(index);
+                        }
+                    });
+
+                    window.addEventListener('beforeunload', () => {
+                        if (presenterWindow && !presenterWindow.closed) presenterWindow.close();
+                    });
+                    showSlide(0); // Initialize first slide
+                }
             });
         `;
 
@@ -655,9 +743,39 @@ export class Exporter {
         <style>${css}${presentationCss}</style>
     </head>
     <body class="${bodyClass}">
-        <div class="slides-overview-pane">${miniSlidesMarkup}</div>
-        <div class="slides-container">${slideMarkup}</div>
-        <div class="speaker-notes-pane"><div class="notes-content-wrapper">${speakerNotesMarkup}</div></div>
+
+        <div id="main-view">
+            <div class="slides-overview-pane">${miniSlidesMarkup}</div>
+            <div class="slides-container">${slideMarkup}</div>
+            <div class="speaker-notes-pane"><div class="notes-content-wrapper">${speakerNotesMarkup}</div></div>
+        </div>
+
+        <div id="presenter-view">
+            <div class="presenter-main">
+                <div class="presenter-current-slide-container">
+                    <div id="presenter-current-slide" class="presenter-slide-host"></div>
+                </div>
+                <div class="presenter-notes-container">
+                    <h3>Speaker Notes</h3>
+                    <div id="presenter-notes"></div>
+                </div>
+            </div>
+            <div class="presenter-sidebar">
+                 <div class="presenter-controls">
+                    <button id="presenter-prev-btn">◀ Prev</button>
+                    <button id="presenter-next-btn">Next ▶</button>
+                </div>
+                <div class="presenter-next-slide-container">
+                    <h4>Next</h4>
+                    <div id="presenter-next-slide" class="presenter-slide-host"></div>
+                </div>
+                <div class="presenter-prev-slide-container">
+                    <h4>Previous</h4>
+                    <div id="presenter-prev-slide" class="presenter-slide-host"></div>
+                </div>
+            </div>
+        </div>
+
         <script>${navigationJs}</script>
     </body>
     </html>`;

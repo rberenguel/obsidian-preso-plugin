@@ -32,6 +32,8 @@ New lines between paragraphs? Just leave a line empty.
 slidenumbers: true
 footer-image: ![[rberenguel_shrug.png]]
 footer: I shrug a lot
+top-left-icon: ![[fine.png]]
+top-right-icon: ![[chuck-norris.png]]
 
 # Nice things
 
@@ -39,11 +41,13 @@ You can add numbers to your slides
 
 As well as a footer icon/image
 
-And a footer proper.
+And a footer proper.[^css] {css; width: 100%; text-align: right; color: lime ; text-shadow: 2px 2px 5px cyan;}
 
 /---
 
 They are enabled until they are not. And you can re-enable them later, too.
+
+[css]: You can also override CSS per paragraph if you feel like you really need to. Sometimes you do
 
 ---
 
@@ -60,6 +64,12 @@ They are enabled until they are not. And you can re-enable them later, too.
 ###### Sixth
 
 ---
+slidenumbers: true
+footer-image: ![[rberenguel_shrug.png]]
+footer: I shrug a lot
+top-left-icon: 
+top-right-icon: 
+
 
 # We have lists[^fn4]
 
