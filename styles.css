@@ -26,7 +26,10 @@
 	z-index: 100;
 	border-radius: 8px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-	padding: 1cqh;
+	padding-top: 1cqh;
+	padding-bottom: 1cqh;
+	padding-right: 1cqw;
+	padding-left: 1cqw; /* Yes, w */
 	box-sizing: border-box;
 	overflow: hidden;
 	container-type: size;
@@ -148,8 +151,32 @@
 /* Resize for links */
 .slide-preview .external-link {
 	background-size: 0.5em;
-	padding-inline-end: 0.5em;
+	padding-inline-end: 0em;
 	background-position-y: 0;
+}
+
+.external-link {
+	color: var(--link-external-color);
+	text-decoration-line: var(--link-external-decoration);
+	cursor: var(--cursor-link);
+	filter: var(--link-external-filter);
+	transition: opacity var(--anim-duration-fast) ease-in-out;
+	background-position: unset;
+	background-repeat: unset;
+	background-image: none;
+}
+
+/* 2. New ::after pseudo-element for the icon */
+.external-link::after {
+	content: "↗";
+	font-size: 40%;
+	position: relative;
+	top: -0.9em;
+	display: inline-block;
+	filter: hue-rotate(90deg);
+	backdrop-filter: invert(0.1);
+	padding: 0.3em 0.3em 0em 0.2em;
+	border-radius: 50%;
 }
 
 .slide-preview ul,
@@ -171,8 +198,10 @@ ol {
 	border-radius: 0.2em;
 }
 
-.slide-preview ol {
+.slide-preview ol,
+ul {
 	padding-inline-start: 0;
+	padding-left: calc(3cqh + 0.2em);
 }
 
 .slide-preview h1 {
@@ -227,7 +256,7 @@ ol {
 	margin-block-end: 0.2em;
 }
 
-/* 2. Layout Logic (Kept from previous change) */
+/* 2. Layout Logic  */
 
 /* Tighter spacing for consecutive headings (e.g., Title & Subtitle) */
 .slide-preview :is(h1, h2, h3, h4, h5, h6) + :is(h1, h2, h3, h4, h5, h6) {
@@ -302,6 +331,38 @@ ol {
 	)
 	h6 {
 	font-size: 9cqh;
+}
+
+/* --- INLINE IMAGE STYLING --- */
+
+/* Styles any image inside a line of text to match the text's height */
+.slide-preview :is(p, li, h1, h2, h3, h4, h5, h6) img {
+	height: 1em;
+	width: auto;
+	vertical-align: -0.1em; /* Adjust to align nicely with text baseline */
+	margin-inline: 0.2em;
+}
+
+/* This targets paragraphs that ONLY contain an image (and nothing else).
+   It resets the inline styles above, allowing the image to be large. */
+.slide-preview p:has(> img:only-child) img,
+.slide-preview p:has(> a:only-child > img:only-child) img {
+	all: unset;
+	display: block;
+	max-width: 100%;
+	max-height: 75cqh;
+	height: auto;
+	width: auto;
+	margin-block: 1em;
+}
+
+/* This centers an image that is the sole content of a paragraph. */
+.slide-preview p:has(> img:only-child),
+.slide-preview p:has(> a:only-child > img:only-child) {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	line-height: normal;
 }
 
 /* ---------------------------------------------------------------------*/
@@ -645,7 +706,7 @@ ol {
 
 .slide-preview.ostrich ul li {
 	position: relative;
-	padding-left: 1.2em; /* Make space for the custom bullet */
+	padding-left: calc(3cqh + 0.2em);
 }
 
 .slide-preview.ostrich ul > li::before {
@@ -657,6 +718,34 @@ ol {
 	/* This uses the accent color from the active Obsidian theme */
 	color: var(--interactive-accent);
 }
+
+/* --- START: Added code for OL alignment in 'ostrich' theme --- */
+
+/* Reset the ordered list to remove default numbering and padding */
+.slide-preview.ostrich ol {
+	list-style-type: none;
+	padding-left: 0;
+	counter-reset: ostrich-counter; /* Initialize a counter for the list */
+}
+
+/* Add relative positioning and padding to the list items, same as the UL */
+.slide-preview.ostrich ol li {
+	position: relative;
+	padding-left: calc(3cqh + 0.2em);
+	counter-increment: ostrich-counter; /* Increment counter for each LI */
+}
+
+/* Create a custom marker that matches the UL's bullet alignment */
+.slide-preview.ostrich ol > li::before {
+	content: counter(ostrich-counter) "."; /* Display '1.', '2.', etc. */
+	position: absolute;
+	left: 0;
+	top: 0.1em; /* Matches the vertical alignment of the UL bullet */
+	font-size: 0.8em; /* Matches the font size of the UL bullet */
+	color: var(--interactive-accent); /* Matches the color of the UL bullet */
+}
+
+/* --- END: Added code for OL alignment in 'ostrich' theme --- */
 
 /* --- THEME: custom --- */
 .slide-preview.custom {

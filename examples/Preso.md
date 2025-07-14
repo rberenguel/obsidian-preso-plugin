@@ -29,6 +29,7 @@ Slides are separated by a Markdown rule separator, three dashes `---` on its own
 New lines between paragraphs? Just leave a line empty.
 
 ---
+favicon: ![[rberenguel_shrug.png]]
 slidenumbers: true
 footer-image: ![[rberenguel_shrug.png]]
 footer: I shrug a lot
@@ -78,7 +79,7 @@ top-right-icon:
 
 ==And obviously==
 
-1. Ordered lists
+1. ~~Un~~Ordered lists
 2. …
 
 [fn4]: And footnotes. I always forget the footnote syntax…
@@ -177,10 +178,19 @@ or
 
 ---
 
+# Presentation mode
+
+1. Export to `HTML+CSS+JS`
+2. Press `P` to open the presentation window ![[amaze.gif]]
+3. Switch your slides to full screen
+4. Enjoy having a view of the _previous slide_, _next slide_ and _speaker notes_ while you present
+5. You can use your keyboard's `←` and `→` on the presenter view to advance
+
+---
+
 ## Tips
 
-- Writing slides is best in _source mode_, **not** on _live preview mode_
-	- I will likely force the editor to this mode on activation of the preview in a later version
+- Writing slides is best in _source mode_, **not** on _live preview mode_. The plugin forces the editor to source mode when switching to a Preso and restores it when leaving.
 - Some things depend on having / not having spaces between things. In case of doubt, try to do it like in this example slides 😏
 
 ---

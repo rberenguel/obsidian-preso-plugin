@@ -1,3 +1,5 @@
+// Exporter.ts
+
 import {
 	App,
 	Notice,
@@ -141,6 +143,33 @@ export class Exporter {
 
 		new Notice(`Exporting ${allSlides.length} slides...`);
 
+		let faviconDataUrl: string | null = null;
+		const getImagePath = (directiveValue: string | null): string | null => {
+			if (!directiveValue) return null;
+			const imageMatch = directiveValue.match(/!\[\[(.*?)\]\]/);
+			if (imageMatch) {
+				const imageName = imageMatch[1];
+				const imageFile = this.app.metadataCache.getFirstLinkpathDest(
+					imageName,
+					file.path,
+				);
+				if (imageFile instanceof TFile) {
+					return this.app.vault.getResourcePath(imageFile);
+				}
+			}
+			return null;
+		};
+
+		for (const slide of allSlides) {
+			if ("favicon" in slide.directives) {
+				const faviconPath = getImagePath(slide.directives["favicon"]);
+				if (faviconPath) {
+					faviconDataUrl = await this.convertUrlToBase64(faviconPath);
+					break; // Use the first one found
+				}
+			}
+		}
+
 		let footerText: string | null = null;
 		let footerImage: string | null = null;
 		let slideNumbers = false;
@@ -196,25 +225,6 @@ export class Exporter {
 				showSlideNumberOnThisSlide = false;
 			}
 
-			const getImagePath = (
-				directiveValue: string | null,
-			): string | null => {
-				if (!directiveValue) return null;
-				const imageMatch = directiveValue.match(/!\[\[(.*?)\]\]/);
-				if (imageMatch) {
-					const imageName = imageMatch[1];
-					const imageFile =
-						this.app.metadataCache.getFirstLinkpathDest(
-							imageName,
-							file.path,
-						);
-					if (imageFile instanceof TFile) {
-						return this.app.vault.getResourcePath(imageFile);
-					}
-				}
-				return null;
-			};
-
 			const extras = {
 				footerText: footerText,
 				footerImageSrc: getImagePath(footerImage),
@@ -258,6 +268,7 @@ export class Exporter {
 					speakerNotesHtml,
 					combinedCss,
 					bodyThemeClass,
+					faviconDataUrl,
 				)
 			: this.createHtmlDocument(
 					file.basename,
@@ -266,6 +277,7 @@ export class Exporter {
 					speakerNotesHtml,
 					combinedCss,
 					bodyThemeClass,
+					faviconDataUrl,
 				);
 
 		const suffix = cssOnly ? ".css-only.html" : ".html";
@@ -385,6 +397,7 @@ export class Exporter {
 		speakerNotesHtml: string[],
 		css: string,
 		bodyAndThemeClasses: string,
+		faviconDataUrl: string | null,
 	): string {
 		const numSlides = allSlides.length;
 		const bodyClass = bodyAndThemeClasses.includes("theme-dark")
@@ -440,37 +453,29 @@ export class Exporter {
 		const presentationCss = `
             ${presentationCssCommon}
             input[type="radio"], input[type="checkbox"] { display: none; }
-            
-            /* --- Layout Panes --- */
             .slides-overview-pane { position: fixed; left: 0; top: 0; height: 100vh; width: 0; background-color: rgba(0,0,0,0.2); overflow-y: auto; transition: width 0.3s ease-in-out; z-index: 20; padding-top: 10px; box-sizing: border-box; }
             .slides-container { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; transition: width 0.3s ease-in-out, left 0.3s ease-in-out; }
             .speaker-notes-pane { position: fixed; top: 0; right: 0; width: 0; height: 100vh; transition: width 0.3s ease-in-out; z-index: 10; display: flex; justify-content: center; align-items: center; }
-            
             ${dynamicCss}
-
-            /* --- Layout State Machine --- */
             #overview-toggle:checked ~ .slides-overview-pane { width: 10vw; }
             #overview-toggle:checked ~ .slides-container { left: 10vw; width: 90vw; }
             #overview-toggle:checked ~ .slides-container .overview-toggle { background-color: rgba(0, 0, 0, 0.2); }
-
             #notes-toggle:checked ~ .slides-container { width: 80vw; }
             #notes-toggle:checked ~ .speaker-notes-pane { width: 20vw; }
             #notes-toggle:checked ~ .slides-container .notes-toggle { background-color: rgba(0, 0, 0, 0.2); }
-
             #overview-toggle:checked ~ #notes-toggle:checked ~ .slides-container { left: 10vw; width: 70vw; }
-
-            /* --- Mini Slide Previews (Simplified) --- */
             .mini-slide-wrapper { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 10px auto; width: 90%; aspect-ratio: 16/9; cursor: pointer; border: 1px solid var(--background-modifier-border); border-radius: 4px; background-color: var(--background-primary); transition: border-color 0.2s; }
             .mini-slide-wrapper:hover { border-color: var(--interactive-accent); }
-           
-            
-            /* --- Speaker Notes Styles --- */
             .notes-content-wrapper { width: calc(100% - 2em); height: calc(80vw * 0.98 * 9 / 16); max-height: calc(98vh - 4em); border-radius: 12px; background-color: var(--background-secondary-alt, #1a1a1a); padding: 2em; box-sizing: border-box; overflow-y: auto; opacity: 0; transition: opacity 0.3s ease-in-out; }
             #notes-toggle:checked ~ .speaker-notes-pane .notes-content-wrapper { opacity: 1; }
             .speaker-notes-pane .notes-content { display: none; }
             .speaker-notes-pane h1, .speaker-notes-pane h2 { border: none; }
             ${dynamicNotesCss}
         `;
+
+		const faviconTag = faviconDataUrl
+			? `<link rel="icon" href="${faviconDataUrl}">`
+			: "";
 
 		return `<!DOCTYPE html>
     <html lang="en">
@@ -479,31 +484,19 @@ export class Exporter {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data:;">
         <title>${title}</title>
+        ${faviconTag}
         <style>${css}${presentationCss}</style>
     </head>
     <body class="${bodyClass}">
         ${radioInputs}
         <input type="checkbox" id="overview-toggle">
         <input type="checkbox" id="notes-toggle">
-
-        <div class="slides-overview-pane">
-            ${miniSlidesMarkup}
-        </div>
-        <div class="slides-container">
-            ${slideMarkup}
-        </div>
-        <div class="speaker-notes-pane">
-             <div class="notes-content-wrapper">
-                ${speakerNotesMarkup}
-            </div>
-        </div>
+        <div class="slides-overview-pane">${miniSlidesMarkup}</div>
+        <div class="slides-container">${slideMarkup}</div>
+        <div class="speaker-notes-pane"><div class="notes-content-wrapper">${speakerNotesMarkup}</div></div>
     </body>
     </html>`;
 	}
-
-	// Exporter.ts
-
-	// ... (keep the rest of the file as is)
 
 	private createHtmlDocument(
 		title: string,
@@ -512,6 +505,7 @@ export class Exporter {
 		speakerNotesHtml: string[],
 		css: string,
 		bodyAndThemeClasses: string,
+		faviconDataUrl: string | null,
 	): string {
 		const bodyClass = bodyAndThemeClasses.includes("theme-dark")
 			? "theme-dark"
@@ -520,7 +514,6 @@ export class Exporter {
 		const slideMarkup = slidesHtml
 			.map((slideOuterHtml, index) => {
 				if (!slideOuterHtml) return "";
-				// Navigation controls will be dynamically shown or hidden by the presenter view
 				const prevLabel = `<div class="nav-label prev"></div>`;
 				const notesLabel = `<div class="nav-label notes-toggle"></div>`;
 				const overviewLabel = `<div class="nav-label overview-toggle"></div>`;
@@ -552,7 +545,6 @@ export class Exporter {
 
 		const presentationCss = `
             ${presentationCssCommon}
-            /* Main view layout */
             #main-view { display: flex; width: 100%; height: 100%; }
             .slides-overview-pane { width: 0; height: 100vh; background-color: rgba(0,0,0,0.2); overflow-y: auto; transition: width 0.3s ease-in-out; z-index: 20; padding-top: 10px; box-sizing: border-box; flex-shrink: 0; }
             .slides-container { width: 100vw; height: 100vh; position: relative; transition: width 0.3s ease-in-out; flex-shrink: 0; }
@@ -576,12 +568,9 @@ export class Exporter {
             #presenter-view { width: 100vw; height: 100vh; background-color: var(--background-secondary, #282828); color: var(--text-normal); font-family: sans-serif; display: none; }
             .presenter-main { flex: 3; display: flex; flex-direction: column; padding: 20px; gap: 20px; }
             .presenter-sidebar { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px; border-left: 1px solid var(--background-modifier-border); }
-            
-            /* ✨ UI Refinement: Removed borders and backgrounds for a cleaner look */
             .presenter-current-slide-container { flex: 2; display: flex; }
             .presenter-notes-container { flex: 1; padding: 10px; overflow-y: auto; }
             .presenter-next-slide-container, .presenter-prev-slide-container { flex: 1; display: flex; flex-direction: column; }
-            
             .presenter-notes-container h3 { margin:0; padding-bottom:10px; border-bottom:1px solid var(--background-modifier-border); }
             .presenter-sidebar h4 { margin: 5px; padding-bottom: 5px; }
             .presenter-slide-host { flex: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -617,7 +606,7 @@ export class Exporter {
                     current = (index + totalSlides) % totalSlides;
                     slides.forEach((s, i) => s.classList.toggle('active', i === current));
                     if (notesVisible) showNotesForSlide(current);
-                    if (!isPresenter) broadcastState(); // Main window broadcasts its new state
+                    if (!isPresenter) broadcastState();
                 };
                 
                 const broadcastState = () => {
@@ -640,13 +629,13 @@ export class Exporter {
                 // --- Event Handlers & Logic ---
                 channel.onmessage = (event) => {
                     const msg = event.data;
-                    if (isPresenter) return; // Presenter only sends, doesn't receive commands
+                    if (isPresenter) return;
                     
                     if (msg.type === 'command') {
                         if (msg.action === 'next') showSlide(current + 1);
                         else if (msg.action === 'prev') showSlide(current - 1);
                         else if (msg.action === 'presenter-ready') {
-                            presenterWindow = window.open('', 'preso-presenter'); // Re-establish link
+                            presenterWindow = window.open('', 'preso-presenter');
                             broadcastState();
                         } else if (msg.action === 'presenter-closing') {
                             presenterWindow = null;
@@ -729,10 +718,14 @@ export class Exporter {
                     window.addEventListener('beforeunload', () => {
                         if (presenterWindow && !presenterWindow.closed) presenterWindow.close();
                     });
-                    showSlide(0); // Initialize first slide
+                    showSlide(0);
                 }
             });
         `;
+
+		const faviconTag = faviconDataUrl
+			? `<link rel="icon" href="${faviconDataUrl}">`
+			: "";
 
 		return `<!DOCTYPE html>
     <html lang="en">
@@ -740,16 +733,15 @@ export class Exporter {
         <meta charset="UTF-8">
         <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data:;">
         <title>${title}</title>
+        ${faviconTag}
         <style>${css}${presentationCss}</style>
     </head>
     <body class="${bodyClass}">
-
         <div id="main-view">
             <div class="slides-overview-pane">${miniSlidesMarkup}</div>
             <div class="slides-container">${slideMarkup}</div>
             <div class="speaker-notes-pane"><div class="notes-content-wrapper">${speakerNotesMarkup}</div></div>
         </div>
-
         <div id="presenter-view">
             <div class="presenter-main">
                 <div class="presenter-current-slide-container">
