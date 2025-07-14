@@ -1,3 +1,4 @@
+// SlidePreviewView.ts
 import { App, MarkdownRenderer, Component } from "obsidian";
 import interact from "interactjs";
 
@@ -92,12 +93,9 @@ export class SlidePreviewView {
 		}
 	}
 
-	// In SlidePreviewView.ts
-
 	async update(markdownContent: string, sourcePath: string) {
 		console.log("[Preso-Debug] --- Slide update triggered ---");
 		if (!this.floatingEl) {
-			//console.error("[Preso-Debug] FATAL: floatingEl is not available.");
 			return;
 		}
 
@@ -225,7 +223,37 @@ export class SlidePreviewView {
 			this.component,
 		);
 
-		// ... (Rest of the function for images, etc.)
+		const applyInlineCssDirectives = (container: HTMLElement) => {
+			const elements = container.querySelectorAll(
+				"p, h1, h2, h3, h4, h5, h6, li",
+			);
+			const directiveRegex = /\{css;(.+?)\}/g;
+
+			elements.forEach((element) => {
+				const htmlEl = element as HTMLElement;
+				if (htmlEl.innerHTML.includes("{css;")) {
+					const originalHtml = htmlEl.innerHTML;
+					let styles = "";
+
+					const cleanedHtml = originalHtml.replace(
+						directiveRegex,
+						(match, css) => {
+							styles += css.trim().endsWith(";")
+								? css.trim() + " "
+								: css.trim() + "; ";
+							return "";
+						},
+					);
+
+					if (styles) {
+						htmlEl.style.cssText += styles;
+						htmlEl.innerHTML = cleanedHtml.trim();
+					}
+				}
+			});
+		};
+		applyInlineCssDirectives(shadowHost);
+
 		const allImages = Array.from(shadowHost.querySelectorAll("img"));
 		const isSimpleFill =
 			allImages.length === 1 &&
@@ -303,50 +331,69 @@ export class SlidePreviewView {
 		}
 	}
 
-	public setExtras(options: {
-		footerText?: string | null;
-		footerImageSrc?: string | null;
-		slideNumber?: string | null;
-	}) {
-		if (!this.floatingEl) return;
+// SlidePreviewView.ts
 
-		this.floatingEl.querySelector(".slide-extras-container")?.remove();
+public setExtras(options: {
+	footerText?: string | null;
+	footerImageSrc?: string | null;
+	slideNumber?: string | null;
+	headerText?: string | null;
+	headerImageSrc?: string | null;
+	topLeftIconSrc?: string | null;
+	topRightIconSrc?: string | null;
+}) {
+	if (!this.floatingEl) return;
 
-		if (
-			!options.footerText &&
-			!options.footerImageSrc &&
-			!options.slideNumber
-		) {
-			return;
+	// Remove any existing extras containers
+	this.floatingEl.querySelector(".slide-header-extras-container")?.remove();
+	this.floatingEl.querySelector(".slide-footer-extras-container")?.remove();
+
+	const hasHeader = options.headerText || options.headerImageSrc || options.topLeftIconSrc || options.topRightIconSrc;
+	const hasFooter = options.footerText || options.footerImageSrc || options.slideNumber;
+
+	// Create and populate the header container if needed
+	if (hasHeader) {
+		const headerContainer = this.floatingEl.createEl("div", { cls: "slide-header-extras-container" });
+		const leftGroup = headerContainer.createEl("div", { cls: "extras-left-group" });
+		const rightGroup = headerContainer.createEl("div", { cls: "extras-right-group" });
+
+		if (options.topLeftIconSrc) {
+			leftGroup.createEl("img", { attr: { src: options.topLeftIconSrc }, cls: "top-left-icon" });
 		}
-
-		this.extrasEl = this.floatingEl.createEl("div", {
-			cls: "slide-extras-container",
-		});
-
-		const footerContent = this.extrasEl.createEl("div", {
-			cls: "footer-content",
-		});
-		if (options.footerImageSrc) {
-			footerContent.createEl("img", {
-				attr: { src: options.footerImageSrc },
-				cls: "footer-image",
-			});
+		if (options.headerText || options.headerImageSrc) {
+			const headerContent = leftGroup.createEl("div", { cls: "header-content" });
+			if (options.headerImageSrc) {
+				headerContent.createEl("img", { attr: { src: options.headerImageSrc }, cls: "header-image" });
+			}
+			if (options.headerText) {
+				headerContent.createEl("span", { text: options.headerText });
+			}
 		}
-		if (options.footerText) {
-			footerContent.createEl("span", {
-				cls: "footer-text",
-				text: options.footerText,
-			});
-		}
-
-		if (options.slideNumber) {
-			this.extrasEl.createEl("div", {
-				cls: "slide-number",
-				text: options.slideNumber,
-			});
+		if (options.topRightIconSrc) {
+			rightGroup.createEl("img", { attr: { src: options.topRightIconSrc }, cls: "top-right-icon" });
 		}
 	}
+
+	// Create and populate the footer container if needed
+	if (hasFooter) {
+		const footerContainer = this.floatingEl.createEl("div", { cls: "slide-footer-extras-container" });
+		const leftGroup = footerContainer.createEl("div", { cls: "extras-left-group" });
+		const rightGroup = footerContainer.createEl("div", { cls: "extras-right-group" });
+
+		if (options.footerText || options.footerImageSrc) {
+			const footerContent = leftGroup.createEl("div", { cls: "footer-content" });
+			if (options.footerImageSrc) {
+				footerContent.createEl("img", { attr: { src: options.footerImageSrc }, cls: "footer-image" });
+			}
+			if (options.footerText) {
+				footerContent.createEl("span", { text: options.footerText });
+			}
+		}
+		if (options.slideNumber) {
+			rightGroup.createEl("div", { cls: "slide-number", text: options.slideNumber });
+		}
+	}
+}
 
 	show() {
 		if (!this.floatingEl) return;

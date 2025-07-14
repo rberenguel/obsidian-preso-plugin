@@ -86,11 +86,9 @@ export default class SlidesPlugin extends Plugin {
 
 	private togglePreview(leaf: WorkspaceLeaf) {
 		if (leaf?.view instanceof MarkdownView) {
-			// Check if a preview exists for this file path before trying to toggle
 			if (this.previewViews.has(leaf.view.file?.path || "nope")) {
 				this.previewViews.get(leaf.view.file?.path || "nope")?.toggle();
 			} else {
-				// If no preview exists, create one
 				this.activateSlides(leaf);
 			}
 		}
@@ -126,14 +124,12 @@ export default class SlidesPlugin extends Plugin {
 		const isPreso = fileCache?.frontmatter?.preso;
 
 		if (isPreso) {
-			// Only auto-activate on desktop. On mobile, the user must use the command.
 			if (!(this.app as any).isMobile) {
 				if (!this.previewViews.has(file.path)) {
 					this.activateSlides(leaf);
 				}
 			}
 		} else {
-			// If it's NOT a presentation file, always deactivate any existing preview on any device.
 			this.deactivateSlides(leaf);
 		}
 	}
@@ -173,10 +169,13 @@ export default class SlidesPlugin extends Plugin {
 
 			const currentSlide = slides[currentSlideIndex];
 
-			// --- State management for directives ---
 			let footerText: string | null = null;
 			let footerImage: string | null = null;
 			let slideNumbers = false;
+			let headerText: string | null = null;
+			let headerImage: string | null = null;
+			let topLeftIcon: string | null = null;
+			let topRightIcon: string | null = null;
 
 			for (let i = 0; i <= currentSlideIndex; i++) {
 				const slide = slides[i];
@@ -195,19 +194,41 @@ export default class SlidesPlugin extends Plugin {
 				if ("slidenumbers" in slide.directives) {
 					slideNumbers = slide.directives["slidenumbers"] === "true";
 				}
+				if ("header" in slide.directives) {
+					headerText =
+						slide.directives["header"] === "empty"
+							? null
+							: slide.directives["header"];
+				}
+				if ("header-image" in slide.directives) {
+					headerImage =
+						slide.directives["header-image"] === "empty"
+							? null
+							: slide.directives["header-image"];
+				}
+				if ("top-left-icon" in slide.directives) {
+					topLeftIcon =
+						slide.directives["top-left-icon"] === "empty"
+							? null
+							: slide.directives["top-left-icon"];
+				}
+				if ("top-right-icon" in slide.directives) {
+					topRightIcon =
+						slide.directives["top-right-icon"] === "empty"
+							? null
+							: slide.directives["top-right-icon"];
+				}
 			}
 
 			let showSlideNumberOnThisSlide = slideNumbers;
 			if (currentSlide.directives["slidenumbers"] === "false") {
 				showSlideNumberOnThisSlide = false;
 			}
-			// --- End State Management ---
-
 			await previewView.update(currentSlide.content, file.path);
 
-			let footerImageSrc: string | null = null;
-			if (footerImage) {
-				const imageMatch = footerImage.match(/!\[\[(.*?)\]\]/);
+			const getImagePath = (directiveValue: string | null): string | null => {
+				if (!directiveValue) return null;
+				const imageMatch = directiveValue.match(/!\[\[(.*?)\]\]/);
 				if (imageMatch) {
 					const imageName = imageMatch[1];
 					const imageFile =
@@ -216,18 +237,22 @@ export default class SlidesPlugin extends Plugin {
 							file.path,
 						);
 					if (imageFile instanceof TFile) {
-						footerImageSrc =
-							this.app.vault.getResourcePath(imageFile);
+						return this.app.vault.getResourcePath(imageFile);
 					}
 				}
-			}
+				return null;
+			};
 
 			previewView.setExtras({
 				footerText: footerText,
-				footerImageSrc: footerImageSrc,
+				footerImageSrc: getImagePath(footerImage),
 				slideNumber: showSlideNumberOnThisSlide
 					? `${currentSlideIndex + 1} / ${slides.length}`
 					: null,
+				headerText: headerText,
+				headerImageSrc: getImagePath(headerImage),
+				topLeftIconSrc: getImagePath(topLeftIcon),
+				topRightIconSrc: getImagePath(topRightIcon),
 			});
 		};
 

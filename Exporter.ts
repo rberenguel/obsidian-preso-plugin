@@ -1,5 +1,3 @@
-// Exporter.ts
-
 import {
 	App,
 	Notice,
@@ -146,6 +144,10 @@ export class Exporter {
 		let footerText: string | null = null;
 		let footerImage: string | null = null;
 		let slideNumbers = false;
+		let headerText: string | null = null;
+		let headerImage: string | null = null;
+		let topLeftIcon: string | null = null;
+		let topRightIcon: string | null = null;
 
 		const slidePromises = allSlides.map(async (currentSlide, index) => {
 			if ("footer" in currentSlide.directives) {
@@ -164,15 +166,39 @@ export class Exporter {
 				slideNumbers =
 					currentSlide.directives["slidenumbers"] === "true";
 			}
+			if ("header" in currentSlide.directives) {
+				headerText =
+					currentSlide.directives["header"] === "empty"
+						? null
+						: currentSlide.directives["header"];
+			}
+			if ("header-image" in currentSlide.directives) {
+				headerImage =
+					currentSlide.directives["header-image"] === "empty"
+						? null
+						: currentSlide.directives["header-image"];
+			}
+			if ("top-left-icon" in currentSlide.directives) {
+				topLeftIcon =
+					currentSlide.directives["top-left-icon"] === "empty"
+						? null
+						: currentSlide.directives["top-left-icon"];
+			}
+			if ("top-right-icon" in currentSlide.directives) {
+				topRightIcon =
+					currentSlide.directives["top-right-icon"] === "empty"
+						? null
+						: currentSlide.directives["top-right-icon"];
+			}
 
 			let showSlideNumberOnThisSlide = slideNumbers;
 			if (currentSlide.directives["slidenumbers"] === "false") {
 				showSlideNumberOnThisSlide = false;
 			}
 
-			let footerImageSrc: string | null = null;
-			if (footerImage) {
-				const imageMatch = footerImage.match(/!\[\[(.*?)\]\]/);
+			const getImagePath = (directiveValue: string | null): string | null => {
+				if (!directiveValue) return null;
+				const imageMatch = directiveValue.match(/!\[\[(.*?)\]\]/);
 				if (imageMatch) {
 					const imageName = imageMatch[1];
 					const imageFile =
@@ -181,18 +207,22 @@ export class Exporter {
 							file.path,
 						);
 					if (imageFile instanceof TFile) {
-						footerImageSrc =
-							this.app.vault.getResourcePath(imageFile);
+						return this.app.vault.getResourcePath(imageFile);
 					}
 				}
-			}
+				return null;
+			};
 
 			const extras = {
 				footerText: footerText,
-				footerImageSrc: footerImageSrc,
+				footerImageSrc: getImagePath(footerImage),
 				slideNumber: showSlideNumberOnThisSlide
 					? `${index + 1} / ${allSlides.length}`
 					: null,
+				headerText: headerText,
+				headerImageSrc: getImagePath(headerImage),
+				topLeftIconSrc: getImagePath(topLeftIcon),
+				topRightIconSrc: getImagePath(topRightIcon),
 			};
 
 			const speakerNotesMarkdown = currentSlide.speakerNotes.join("\n");
@@ -220,21 +250,21 @@ export class Exporter {
 
 		const finalHtml = cssOnly
 			? this.createCssOnlyHtmlDocument(
-					file.basename,
-					allSlides,
-					slidesHtml,
-					speakerNotesHtml,
-					combinedCss,
-					bodyThemeClass,
-				)
+				file.basename,
+				allSlides,
+				slidesHtml,
+				speakerNotesHtml,
+				combinedCss,
+				bodyThemeClass,
+			)
 			: this.createHtmlDocument(
-					file.basename,
-					allSlides,
-					slidesHtml,
-					speakerNotesHtml,
-					combinedCss,
-					bodyThemeClass,
-				);
+				file.basename,
+				allSlides,
+				slidesHtml,
+				speakerNotesHtml,
+				combinedCss,
+				bodyThemeClass,
+			);
 
 		const suffix = cssOnly ? ".css-only.html" : ".html";
 		this.downloadFile(finalHtml, `${file.basename}${suffix}`);

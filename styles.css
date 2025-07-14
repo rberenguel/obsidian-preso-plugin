@@ -697,46 +697,66 @@ background-size: 0.5em;
 	background: #e8e8e8;
 }
 
-/* --- FOOTER & SLIDE NUMBER STYLES --- */
-.slide-preview .slide-extras-container {
+/* --- SLIDE EXTRAS (HEADER, FOOTER, ICONS) --- */
+
+/* Shared styles for the new header and footer containers */
+.slide-header-extras-container,
+.slide-footer-extras-container {
 	position: absolute;
-	bottom: 0;
 	left: 0;
 	right: 0;
 	height: 5cqh;
 	padding: 0 2.5cqw;
 	box-sizing: border-box;
+	z-index: 100;
+	pointer-events: none;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	z-index: 100;
-	pointer-events: none;
 }
 
-.slide-extras-container > * {
+/* Position the header bar at the top */
+.slide-header-extras-container {
+	top: 0.5cqh;
+}
+
+/* Position the footer bar at the bottom (restoring original layout) */
+.slide-footer-extras-container {
+	bottom: 0;
+}
+
+/* Groups for left- and right-aligned items */
+.extras-left-group,
+.extras-right-group {
+	display: flex;
+	align-items: center;
+	gap: 1cqw;
 	pointer-events: all;
 }
 
-.slide-extras-container .footer-content {
+/* Shared styles for content inside the bars */
+.header-content,
+.footer-content {
 	display: flex;
 	align-items: center;
 	gap: 1cqw;
 }
 
-.slide-extras-container .footer-image {
+.slide-header-extras-container *,
+.slide-footer-extras-container * {
+	font-size: 2.5cqh;
+	opacity: 0.9;
+}
+
+.header-image,
+.footer-image,
+.top-left-icon,
+.top-right-icon {
 	max-height: 3.5cqh;
 	width: auto;
 }
 
-.slide-extras-container .footer-text {
-	font-size: 2.5cqh;
-	opacity: 0.7;
-}
-
-.slide-extras-container .slide-number {
-	font-size: 2.5cqh;
-	opacity: 0.7;
-}
+/* Fooder ends */
 
 .slides-modal .slide-container {
 	margin-bottom: 30px;
