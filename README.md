@@ -3,7 +3,7 @@
 Preso is a plugin for creating and previewing presentations directly within Obsidian. It provides a live, in-editor preview of your slides, allowing for a fast and fluid content creation workflow.
 
 > [!TIP]
-> You can find the _tutorial slides_ here: [HTTP+CSS+JS](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Test.html), [HTTP+CSS](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Preso.css-only.html), and the source for these slides is in the `examples` folder.
+> You can find the _tutorial slides_ here: [HTTP+CSS+JS](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Preso.html), [HTTP+CSS](https://www.mostlymaths.net/obsidian-preso-plugin/examples/Preso.css-only.html), and the source for these slides is in the `examples` folder.
 
 The result is heavily inspired by [Deckset](https://www.deckset.com/), and is not my first time writing some sort of partial version ([awkrdeck](https://github.com/rberenguel/awkrdeck/tree/master), [haskset](https://github.com/rberenguel/haskset)) .
 
