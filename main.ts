@@ -16,6 +16,8 @@ import { Exporter } from "./Exporter";
 export default class SlidesPlugin extends Plugin {
 	private previewViews: Map<string, SlidePreviewView> = new Map();
 	private exporter: Exporter;
+	private originalModes: Map<string, "source" | "preview"> = new Map();
+	private lastActiveLeaf: WorkspaceLeaf | null = null;
 
 	async onload() {
 		this.exporter = new Exporter(this.app);
@@ -74,6 +76,10 @@ export default class SlidesPlugin extends Plugin {
 			},
 		});
 
+		this.app.workspace.onLayoutReady(() => {
+			this.lastActiveLeaf = this.app.workspace.activeLeaf;
+		});
+
 		this.app.workspace.on(
 			"active-leaf-change",
 			this.handleActiveLeafChange.bind(this),
@@ -97,6 +103,21 @@ export default class SlidesPlugin extends Plugin {
 	onunload() {
 		this.previewViews.forEach((view) => view.destroy());
 		this.previewViews.clear();
+		this.originalModes.forEach((mode, path) => {
+			this.app.workspace.iterateAllLeaves((leaf) => {
+				if (
+					leaf.view instanceof MarkdownView &&
+					leaf.view.file?.path === path
+				) {
+					const state = leaf.view.getState();
+					leaf.view.setState(
+						{ ...state, mode: mode },
+						{ history: false },
+					);
+				}
+			});
+		});
+		this.originalModes.clear();
 	}
 
 	handleLayoutChange() {
@@ -115,23 +136,67 @@ export default class SlidesPlugin extends Plugin {
 		}
 	}
 
-	handleActiveLeafChange(leaf: WorkspaceLeaf | null) {
-		if (!(leaf?.view instanceof MarkdownView)) return;
-		const file = leaf.view.file;
-		if (!file) return;
+	handleActiveLeafChange(newLeaf: WorkspaceLeaf | null) {
+		const oldLeaf = this.lastActiveLeaf;
 
-		const fileCache = this.app.metadataCache.getFileCache(file);
-		const isPreso = fileCache?.frontmatter?.preso;
-
-		if (isPreso) {
-			if (!(this.app as any).isMobile) {
-				if (!this.previewViews.has(file.path)) {
-					this.activateSlides(leaf);
-				}
+		// Handle leaving a leaf
+		if (
+			oldLeaf &&
+			oldLeaf.view instanceof MarkdownView &&
+			oldLeaf.view.file
+		) {
+			const oldPath = oldLeaf.view.file.path;
+			if (this.originalModes.has(oldPath)) {
+				const originalMode = this.originalModes.get(oldPath);
+				const state = oldLeaf.view.getState();
+				oldLeaf.view.setState(
+					{ ...state, mode: originalMode },
+					{ history: false },
+				);
+				this.originalModes.delete(oldPath);
 			}
-		} else {
-			this.deactivateSlides(leaf);
 		}
+
+		// Handle entering a new leaf
+		if (
+			newLeaf &&
+			newLeaf.view instanceof MarkdownView &&
+			newLeaf.view.file
+		) {
+			const newFile = newLeaf.view.file;
+			const fileCache = this.app.metadataCache.getFileCache(newFile);
+			const isPreso = fileCache?.frontmatter?.preso;
+
+			if (isPreso) {
+				const view = newLeaf.view;
+				const state = view.getState();
+				const currentMode = state.mode;
+
+				// Type guard to ensure mode is of the expected type
+				if (currentMode === "source" || currentMode === "preview") {
+					if (currentMode !== "source") {
+						this.originalModes.set(newFile.path, currentMode);
+						view.setState(
+							{ ...state, mode: "source" },
+							{ history: false },
+						);
+					}
+				}
+
+				if (
+					!(this.app as any).isMobile &&
+					!this.previewViews.has(newFile.path)
+				) {
+					this.activateSlides(newLeaf);
+				}
+			} else {
+				this.deactivateSlides(newLeaf);
+			}
+		} else if (newLeaf) {
+			this.deactivateSlides(newLeaf);
+		}
+
+		this.lastActiveLeaf = newLeaf;
 	}
 
 	activateSlides(leaf: WorkspaceLeaf) {
@@ -226,7 +291,9 @@ export default class SlidesPlugin extends Plugin {
 			}
 			await previewView.update(currentSlide.content, file.path);
 
-			const getImagePath = (directiveValue: string | null): string | null => {
+			const getImagePath = (
+				directiveValue: string | null,
+			): string | null => {
 				if (!directiveValue) return null;
 				const imageMatch = directiveValue.match(/!\[\[(.*?)\]\]/);
 				if (imageMatch) {
@@ -265,11 +332,13 @@ export default class SlidesPlugin extends Plugin {
 	}
 
 	deactivateSlides(leaf: WorkspaceLeaf) {
-		const view = leaf.view as MarkdownView;
-		const file = view.file;
-		if (file && this.previewViews.has(file.path)) {
-			this.previewViews.get(file.path)?.destroy();
-			this.previewViews.delete(file.path);
+		const view = leaf?.view;
+		if (view instanceof MarkdownView) {
+			const file = view.file;
+			if (file && this.previewViews.has(file.path)) {
+				this.previewViews.get(file.path)?.destroy();
+				this.previewViews.delete(file.path);
+			}
 		}
 	}
 }

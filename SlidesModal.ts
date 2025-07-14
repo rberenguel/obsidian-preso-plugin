@@ -81,15 +81,18 @@ export class SlidesModal extends Modal {
 				showSlideNumberOnThisSlide = false;
 			}
 
-			const getImagePath = (directiveValue: string | null): string | null => {
+			const getImagePath = (
+				directiveValue: string | null,
+			): string | null => {
 				if (!directiveValue) return null;
 				const imageMatch = directiveValue.match(/!\[\[(.*?)\]\]/);
 				if (imageMatch) {
 					const imageName = imageMatch[1];
-					const imageFile = this.app.metadataCache.getFirstLinkpathDest(
-						imageName,
-						this.sourcePath,
-					);
+					const imageFile =
+						this.app.metadataCache.getFirstLinkpathDest(
+							imageName,
+							this.sourcePath,
+						);
 					if (imageFile instanceof TFile) {
 						return this.app.vault.getResourcePath(imageFile);
 					}

@@ -147,12 +147,13 @@
 
 /* Resize for links */
 .slide-preview .external-link {
-background-size: 0.5em;
-    padding-inline-end: 0.5em;
-    background-position-y: 0;
+	background-size: 0.5em;
+	padding-inline-end: 0.5em;
+	background-position-y: 0;
 }
 
-.slide-preview ul, ol {
+.slide-preview ul,
+ol {
 	margin-block-start: 0.1em;
 	margin-block-end: 0.1em;
 }
@@ -163,16 +164,15 @@ background-size: 0.5em;
 }
 
 .slide-preview code:not([class^="language-"]) {
-    font-size: 70%;
-    text-transform: none;
-    background-color: var(--background-modifier-border);
-    padding: 0.2em 0.3em 0.2em 0.3em;
-    border-radius: 0.2em;
+	font-size: 70%;
+	text-transform: none;
+	background-color: var(--background-modifier-border);
+	padding: 0.2em 0.3em 0.2em 0.3em;
+	border-radius: 0.2em;
 }
 
 .slide-preview ol {
 	padding-inline-start: 0;
-
 }
 
 .slide-preview h1 {
@@ -237,8 +237,8 @@ background-size: 0.5em;
 /* Automatic "Title and Content" Layout */
 /* Switches from centered to top-aligned when a slide has a heading and other content */
 .slide-preview.is-visible:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *))
-	 {
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
+	) {
 	justify-content: flex-start; /* Aligns content to the top */
 }
 
@@ -257,7 +257,8 @@ background-size: 0.5em;
 
 /* Make headings full-width in this layout to ensure proper left alignment */
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *))
+		:is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
+	)
 	> :is(h1, h2, h3, h4, h5, h6) {
 	width: 100%;
 }
@@ -492,7 +493,7 @@ background-size: 0.5em;
 
 .slide-preview .footnotes {
 	backdrop-filter: invert(0.1);
-	padding-top: 0.05em;
+	padding-top: 0.01em;
 	border-radius: 0.05em;
 }
 
@@ -515,11 +516,15 @@ background-size: 0.5em;
 }
 
 .slide-preview .footnotes * {
-	font-size: 5cqh !important;
+	font-size: 3cqh !important;
 }
 
 .slide-preview .footnotes li::before {
 	content: none !important;
+}
+
+.slide-preview .footnotes li::marker {
+	color: var(--interactive-accent);
 }
 
 /* --- THEME: serious --- */
@@ -717,12 +722,12 @@ background-size: 0.5em;
 
 /* Position the header bar at the top */
 .slide-header-extras-container {
-	top: 0.5cqh;
+	top: 1cqh;
 }
 
 /* Position the footer bar at the bottom (restoring original layout) */
 .slide-footer-extras-container {
-	bottom: 0;
+	bottom: 0.2cqh;
 }
 
 /* Groups for left- and right-aligned items */

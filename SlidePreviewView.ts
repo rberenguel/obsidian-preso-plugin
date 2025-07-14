@@ -331,69 +331,113 @@ export class SlidePreviewView {
 		}
 	}
 
-// SlidePreviewView.ts
+	// SlidePreviewView.ts
 
-public setExtras(options: {
-	footerText?: string | null;
-	footerImageSrc?: string | null;
-	slideNumber?: string | null;
-	headerText?: string | null;
-	headerImageSrc?: string | null;
-	topLeftIconSrc?: string | null;
-	topRightIconSrc?: string | null;
-}) {
-	if (!this.floatingEl) return;
+	public setExtras(options: {
+		footerText?: string | null;
+		footerImageSrc?: string | null;
+		slideNumber?: string | null;
+		headerText?: string | null;
+		headerImageSrc?: string | null;
+		topLeftIconSrc?: string | null;
+		topRightIconSrc?: string | null;
+	}) {
+		if (!this.floatingEl) return;
 
-	// Remove any existing extras containers
-	this.floatingEl.querySelector(".slide-header-extras-container")?.remove();
-	this.floatingEl.querySelector(".slide-footer-extras-container")?.remove();
+		// Remove any existing extras containers
+		this.floatingEl
+			.querySelector(".slide-header-extras-container")
+			?.remove();
+		this.floatingEl
+			.querySelector(".slide-footer-extras-container")
+			?.remove();
 
-	const hasHeader = options.headerText || options.headerImageSrc || options.topLeftIconSrc || options.topRightIconSrc;
-	const hasFooter = options.footerText || options.footerImageSrc || options.slideNumber;
+		const hasHeader =
+			options.headerText ||
+			options.headerImageSrc ||
+			options.topLeftIconSrc ||
+			options.topRightIconSrc;
+		const hasFooter =
+			options.footerText || options.footerImageSrc || options.slideNumber;
 
-	// Create and populate the header container if needed
-	if (hasHeader) {
-		const headerContainer = this.floatingEl.createEl("div", { cls: "slide-header-extras-container" });
-		const leftGroup = headerContainer.createEl("div", { cls: "extras-left-group" });
-		const rightGroup = headerContainer.createEl("div", { cls: "extras-right-group" });
+		// Create and populate the header container if needed
+		if (hasHeader) {
+			const headerContainer = this.floatingEl.createEl("div", {
+				cls: "slide-header-extras-container",
+			});
+			const leftGroup = headerContainer.createEl("div", {
+				cls: "extras-left-group",
+			});
+			const rightGroup = headerContainer.createEl("div", {
+				cls: "extras-right-group",
+			});
 
-		if (options.topLeftIconSrc) {
-			leftGroup.createEl("img", { attr: { src: options.topLeftIconSrc }, cls: "top-left-icon" });
-		}
-		if (options.headerText || options.headerImageSrc) {
-			const headerContent = leftGroup.createEl("div", { cls: "header-content" });
-			if (options.headerImageSrc) {
-				headerContent.createEl("img", { attr: { src: options.headerImageSrc }, cls: "header-image" });
+			if (options.topLeftIconSrc) {
+				leftGroup.createEl("img", {
+					attr: { src: options.topLeftIconSrc },
+					cls: "top-left-icon",
+				});
 			}
-			if (options.headerText) {
-				headerContent.createEl("span", { text: options.headerText });
+			if (options.headerText || options.headerImageSrc) {
+				const headerContent = leftGroup.createEl("div", {
+					cls: "header-content",
+				});
+				if (options.headerImageSrc) {
+					headerContent.createEl("img", {
+						attr: { src: options.headerImageSrc },
+						cls: "header-image",
+					});
+				}
+				if (options.headerText) {
+					headerContent.createEl("span", {
+						text: options.headerText,
+					});
+				}
+			}
+			if (options.topRightIconSrc) {
+				rightGroup.createEl("img", {
+					attr: { src: options.topRightIconSrc },
+					cls: "top-right-icon",
+				});
 			}
 		}
-		if (options.topRightIconSrc) {
-			rightGroup.createEl("img", { attr: { src: options.topRightIconSrc }, cls: "top-right-icon" });
+
+		// Create and populate the footer container if needed
+		if (hasFooter) {
+			const footerContainer = this.floatingEl.createEl("div", {
+				cls: "slide-footer-extras-container",
+			});
+			const leftGroup = footerContainer.createEl("div", {
+				cls: "extras-left-group",
+			});
+			const rightGroup = footerContainer.createEl("div", {
+				cls: "extras-right-group",
+			});
+
+			if (options.footerText || options.footerImageSrc) {
+				const footerContent = leftGroup.createEl("div", {
+					cls: "footer-content",
+				});
+				if (options.footerImageSrc) {
+					footerContent.createEl("img", {
+						attr: { src: options.footerImageSrc },
+						cls: "footer-image",
+					});
+				}
+				if (options.footerText) {
+					footerContent.createEl("span", {
+						text: options.footerText,
+					});
+				}
+			}
+			if (options.slideNumber) {
+				rightGroup.createEl("div", {
+					cls: "slide-number",
+					text: options.slideNumber,
+				});
+			}
 		}
 	}
-
-	// Create and populate the footer container if needed
-	if (hasFooter) {
-		const footerContainer = this.floatingEl.createEl("div", { cls: "slide-footer-extras-container" });
-		const leftGroup = footerContainer.createEl("div", { cls: "extras-left-group" });
-		const rightGroup = footerContainer.createEl("div", { cls: "extras-right-group" });
-
-		if (options.footerText || options.footerImageSrc) {
-			const footerContent = leftGroup.createEl("div", { cls: "footer-content" });
-			if (options.footerImageSrc) {
-				footerContent.createEl("img", { attr: { src: options.footerImageSrc }, cls: "footer-image" });
-			}
-			if (options.footerText) {
-				footerContent.createEl("span", { text: options.footerText });
-			}
-		}
-		if (options.slideNumber) {
-			rightGroup.createEl("div", { cls: "slide-number", text: options.slideNumber });
-		}
-	}
-}
 
 	show() {
 		if (!this.floatingEl) return;

@@ -196,7 +196,9 @@ export class Exporter {
 				showSlideNumberOnThisSlide = false;
 			}
 
-			const getImagePath = (directiveValue: string | null): string | null => {
+			const getImagePath = (
+				directiveValue: string | null,
+			): string | null => {
 				if (!directiveValue) return null;
 				const imageMatch = directiveValue.match(/!\[\[(.*?)\]\]/);
 				if (imageMatch) {
@@ -250,21 +252,21 @@ export class Exporter {
 
 		const finalHtml = cssOnly
 			? this.createCssOnlyHtmlDocument(
-				file.basename,
-				allSlides,
-				slidesHtml,
-				speakerNotesHtml,
-				combinedCss,
-				bodyThemeClass,
-			)
+					file.basename,
+					allSlides,
+					slidesHtml,
+					speakerNotesHtml,
+					combinedCss,
+					bodyThemeClass,
+				)
 			: this.createHtmlDocument(
-				file.basename,
-				allSlides,
-				slidesHtml,
-				speakerNotesHtml,
-				combinedCss,
-				bodyThemeClass,
-			);
+					file.basename,
+					allSlides,
+					slidesHtml,
+					speakerNotesHtml,
+					combinedCss,
+					bodyThemeClass,
+				);
 
 		const suffix = cssOnly ? ".css-only.html" : ".html";
 		this.downloadFile(finalHtml, `${file.basename}${suffix}`);
