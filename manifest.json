@@ -1,7 +1,7 @@
 {
 	"id": "preso",
 	"name": "Preso",
-	"version": "0.1.2",
+	"version": "0.2.0",
 	"minAppVersion": "0.15.0",
 	"description": "A plugin to create and view slides in Obsidian.",
 	"author": "Ruben Berenguel",
