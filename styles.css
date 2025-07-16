@@ -842,6 +842,10 @@ ul {
 	opacity: 0.9;
 }
 
+.footer-content p, header-content p {
+	font-size: 2.5cqh;
+}
+
 .header-image,
 .footer-image,
 .top-left-icon,

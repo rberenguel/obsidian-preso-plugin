@@ -93,6 +93,37 @@ export class SlidePreviewView {
 		}
 	}
 
+	private applyInlineCssDirectives(container: HTMLElement){
+		const elements = container.querySelectorAll(
+			"p, h1, h2, h3, h4, h5, h6, li",
+		);
+		const directiveRegex = /\{css;(.+?)\}/g;
+		elements.forEach((element) => {
+			
+			const htmlEl = element as HTMLElement;
+			if (htmlEl.innerHTML.includes("{css;")) {
+				console.log("Directive found", htmlEl.innerHTML)
+				const originalHtml = htmlEl.innerHTML;
+				let styles = "";
+
+				const cleanedHtml = originalHtml.replace(
+					directiveRegex,
+					(match, css) => {
+						styles += css.trim().endsWith(";")
+							? css.trim() + " "
+							: css.trim() + "; ";
+						return "";
+					},
+				);
+
+				if (styles) {
+					htmlEl.style.cssText += styles;
+					htmlEl.innerHTML = cleanedHtml.trim();
+				}
+			}
+		});
+	}
+
 	async update(markdownContent: string, sourcePath: string) {
 		console.log("[Preso-Debug] --- Slide update triggered ---");
 		if (!this.floatingEl) {
@@ -123,6 +154,8 @@ export class SlidePreviewView {
 		const lines = hrProcessedMarkdown.split("\n");
 		const footnoteDefs = new Map<string, string>();
 		const contentLines: string[] = [];
+		// Gemini stop fucking double escaping the following regex, it
+		// is fucking correct for fuck's sake
 		const footnoteDefRegex = /^.*\[(.+?)\]:\s*(.*)/;
 
 		for (const line of lines) {
@@ -145,7 +178,8 @@ export class SlidePreviewView {
 				"[Preso-Debug] 3. Markdown content for reference parsing:",
 				JSON.stringify(mainMarkdown),
 			);
-
+			// Gemini stop fucking double escaping the following regex, it
+			// is fucking correct for fuck's sake
 			const footnoteRefRegex = /\[\^(.+?)\]/g;
 			const footnoteRefMap = new Map<string, number>();
 			let footnoteCounter = 1;
@@ -205,7 +239,7 @@ export class SlidePreviewView {
 							this.app,
 							content,
 							listItem,
-							sourcePath,
+							sourcePath ?? "",
 							this.component,
 						);
 					}
@@ -223,36 +257,7 @@ export class SlidePreviewView {
 			this.component,
 		);
 
-		const applyInlineCssDirectives = (container: HTMLElement) => {
-			const elements = container.querySelectorAll(
-				"p, h1, h2, h3, h4, h5, h6, li",
-			);
-			const directiveRegex = /\{css;(.+?)\}/g;
-
-			elements.forEach((element) => {
-				const htmlEl = element as HTMLElement;
-				if (htmlEl.innerHTML.includes("{css;")) {
-					const originalHtml = htmlEl.innerHTML;
-					let styles = "";
-
-					const cleanedHtml = originalHtml.replace(
-						directiveRegex,
-						(match, css) => {
-							styles += css.trim().endsWith(";")
-								? css.trim() + " "
-								: css.trim() + "; ";
-							return "";
-						},
-					);
-
-					if (styles) {
-						htmlEl.style.cssText += styles;
-						htmlEl.innerHTML = cleanedHtml.trim();
-					}
-				}
-			});
-		};
-		applyInlineCssDirectives(shadowHost);
+		this.applyInlineCssDirectives(shadowHost);
 
 		const allImages = Array.from(shadowHost.querySelectorAll("img"));
 		const isSimpleFill =
@@ -333,15 +338,18 @@ export class SlidePreviewView {
 
 	// SlidePreviewView.ts
 
-	public setExtras(options: {
-		footerText?: string | null;
-		footerImageSrc?: string | null;
-		slideNumber?: string | null;
-		headerText?: string | null;
-		headerImageSrc?: string | null;
-		topLeftIconSrc?: string | null;
-		topRightIconSrc?: string | null;
-	}) {
+	public async setExtras(
+		options: {
+			footerText?: string | null;
+			footerImageSrc?: string | null;
+			slideNumber?: string | null;
+			headerText?: string | null;
+			headerImageSrc?: string | null;
+			topLeftIconSrc?: string | null;
+			topRightIconSrc?: string | null;
+		},
+		sourcePath: string,
+	) {
 		if (!this.floatingEl) return;
 
 		// Remove any existing extras containers
@@ -389,9 +397,15 @@ export class SlidePreviewView {
 					});
 				}
 				if (options.headerText) {
-					headerContent.createEl("span", {
-						text: options.headerText,
-					});
+					const headerTextEl = headerContent.createEl("span");
+					await MarkdownRenderer.render(
+						this.app,
+						options.headerText,
+						headerTextEl,
+						sourcePath ?? "",
+						this.component,
+					);
+					this.applyInlineCssDirectives(headerTextEl);
 				}
 			}
 			if (options.topRightIconSrc) {
@@ -425,9 +439,16 @@ export class SlidePreviewView {
 					});
 				}
 				if (options.footerText) {
-					footerContent.createEl("span", {
-						text: options.footerText,
-					});
+					console.log("Footing", sourcePath)
+					const footerTextEl = footerContent.createEl("span");
+					await MarkdownRenderer.render(
+						this.app,
+						options.footerText,
+						footerTextEl,
+						sourcePath ?? "",
+						this.component,
+					);
+					this.applyInlineCssDirectives(footerTextEl);
 				}
 			}
 			if (options.slideNumber) {

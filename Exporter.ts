@@ -346,6 +346,10 @@ export class Exporter {
 			footerText?: string | null;
 			footerImageSrc?: string | null;
 			slideNumber?: string | null;
+			headerText?: string | null;
+			headerImageSrc?: string | null;
+			topLeftIconSrc?: string | null;
+			topRightIconSrc?: string | null;
 		},
 	): Promise<string> {
 		const tempContainer = createDiv();
@@ -354,7 +358,7 @@ export class Exporter {
 		tempSlide.setTheme(theme);
 
 		await tempSlide.update(markdownContent, sourcePath);
-		tempSlide.setExtras(extras);
+		await tempSlide.setExtras(extras, sourcePath);
 
 		const floatingEl = tempContainer.firstElementChild as HTMLElement;
 		if (floatingEl) {

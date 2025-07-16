@@ -121,7 +121,7 @@ export class SlidesModal extends Modal {
 			slideView.create();
 			slideView.setTheme(this.theme);
 			await slideView.update(slide.content, this.sourcePath);
-			slideView.setExtras(extras);
+			await slideView.setExtras(extras, this.sourcePath);
 			slideView.show();
 		}
 	}
