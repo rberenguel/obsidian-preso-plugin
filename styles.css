@@ -580,10 +580,6 @@ ul {
 	font-size: 3cqh !important;
 }
 
-.slide-preview .footnotes li::before {
-	content: none !important;
-}
-
 .slide-preview .footnotes li::marker {
 	color: var(--interactive-accent);
 }
@@ -745,6 +741,12 @@ ul {
 	color: var(--interactive-accent); /* Matches the color of the UL bullet */
 }
 
+.slide-preview.ostrich .footnotes ol > li::before {
+	left: 1cqh;
+	top: 0.5cqh;
+	font-size: 0.9em;
+}
+
 /* --- END: Added code for OL alignment in 'ostrich' theme --- */
 
 /* --- THEME: custom --- */
@@ -842,7 +844,8 @@ ul {
 	opacity: 0.9;
 }
 
-.footer-content p, header-content p {
+.footer-content p,
+header-content p {
 	font-size: 2.5cqh;
 }
 

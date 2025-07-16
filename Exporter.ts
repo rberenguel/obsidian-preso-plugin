@@ -700,8 +700,10 @@ export class Exporter {
                     document.body.addEventListener('click', (e) => {
                         const navTarget = e.target.closest('.nav-label');
                         const miniSlideTarget = e.target.closest('.mini-slide-wrapper');
-                        if (!navTarget && !miniSlideTarget) return;
-
+                        if (!navTarget && !miniSlideTarget) {
+                            showSlide(current + 1); // Next slide on click anywhere that is not a button
+                            return;
+                        }
                         if (navTarget) {
                             if (navTarget.classList.contains('next')) showSlide(current + 1);
                             else if (navTarget.classList.contains('prev')) showSlide(current - 1);

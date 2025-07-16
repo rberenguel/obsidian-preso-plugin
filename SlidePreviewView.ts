@@ -93,22 +93,45 @@ export class SlidePreviewView {
 		}
 	}
 
-	private applyInlineCssDirectives(container: HTMLElement){
+	private isStraightLinkTree(htmlEl: HTMLElement): boolean {
+		let currentNode: HTMLElement = htmlEl;
+
+		while (true) {
+			const elementChildren = currentNode.children;
+
+			if (elementChildren.length > 1) {
+				return false;
+			}
+
+			if (elementChildren.length === 0) {
+				return currentNode.tagName.toLowerCase() === "a";
+			}
+
+			currentNode = elementChildren[0] as HTMLElement;
+		}
+	}
+
+	private applyInlineCssDirectives(container: HTMLElement) {
 		const elements = container.querySelectorAll(
 			"p, h1, h2, h3, h4, h5, h6, li",
 		);
-		const directiveRegex = /\{css;(.+?)\}/g;
+		const directiveRegex = /\{css;`?(.+?)`?\}/g;
 		elements.forEach((element) => {
-			
 			const htmlEl = element as HTMLElement;
 			if (htmlEl.innerHTML.includes("{css;")) {
-				console.log("Directive found", htmlEl.innerHTML)
+				console.log(
+					`[Preso-debug]: Directive found in '${htmlEl.innerHTML}'`,
+				);
 				const originalHtml = htmlEl.innerHTML;
 				let styles = "";
 
 				const cleanedHtml = originalHtml.replace(
 					directiveRegex,
-					(match, css) => {
+					(match, css_) => {
+						const css = css_
+							.replace("<code>", "")
+							.replace("</code>", "");
+						// This let's us wrap the CSS directives in a code block
 						styles += css.trim().endsWith(";")
 							? css.trim() + " "
 							: css.trim() + "; ";
@@ -117,8 +140,23 @@ export class SlidePreviewView {
 				);
 
 				if (styles) {
-					htmlEl.style.cssText += styles;
-					htmlEl.innerHTML = cleanedHtml.trim();
+					if (this.isStraightLinkTree(htmlEl)) {
+						// This let's us style only links
+						console.log(`[Preso-debug]: This is a pure link tree`);
+						htmlEl.innerHTML = cleanedHtml.trim();
+						const a = htmlEl.querySelector("A") as HTMLElement;
+						if (a) {
+							const tempDiv = document.createElement("div");
+							tempDiv.innerHTML = cleanedHtml.trim();
+							console.log(cleanedHtml.trim());
+							a.style.cssText += styles;
+							a.textContent = tempDiv.textContent;
+						}
+					} else {
+						console.log(`[Preso-debug]: This is a composite tree`);
+						htmlEl.style.cssText += styles;
+						htmlEl.innerHTML = cleanedHtml.trim();
+					}
 				}
 			}
 		});
@@ -439,7 +477,7 @@ export class SlidePreviewView {
 					});
 				}
 				if (options.footerText) {
-					console.log("Footing", sourcePath)
+					console.log("Footing", sourcePath);
 					const footerTextEl = footerContent.createEl("span");
 					await MarkdownRenderer.render(
 						this.app,
