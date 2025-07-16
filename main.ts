@@ -228,7 +228,7 @@ export default class SlidesPlugin extends Plugin {
 
 			if (currentSlideIndex === -1) {
 				await previewView.update("", file.path);
-				previewView.setExtras({});
+				previewView.setExtras({}, "");
 				return;
 			}
 
@@ -320,7 +320,7 @@ export default class SlidesPlugin extends Plugin {
 				headerImageSrc: getImagePath(headerImage),
 				topLeftIconSrc: getImagePath(topLeftIcon),
 				topRightIconSrc: getImagePath(topRightIcon),
-			});
+			}, "");
 		};
 
 		previewView.registerDomEvent(view.contentEl, "click", update);
