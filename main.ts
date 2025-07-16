@@ -310,17 +310,20 @@ export default class SlidesPlugin extends Plugin {
 				return null;
 			};
 
-			previewView.setExtras({
-				footerText: footerText,
-				footerImageSrc: getImagePath(footerImage),
-				slideNumber: showSlideNumberOnThisSlide
-					? `${currentSlideIndex + 1} / ${slides.length}`
-					: null,
-				headerText: headerText,
-				headerImageSrc: getImagePath(headerImage),
-				topLeftIconSrc: getImagePath(topLeftIcon),
-				topRightIconSrc: getImagePath(topRightIcon),
-			}, "");
+			previewView.setExtras(
+				{
+					footerText: footerText,
+					footerImageSrc: getImagePath(footerImage),
+					slideNumber: showSlideNumberOnThisSlide
+						? `${currentSlideIndex + 1} / ${slides.length}`
+						: null,
+					headerText: headerText,
+					headerImageSrc: getImagePath(headerImage),
+					topLeftIconSrc: getImagePath(topLeftIcon),
+					topRightIconSrc: getImagePath(topRightIcon),
+				},
+				"",
+			);
 		};
 
 		previewView.registerDomEvent(view.contentEl, "click", update);
