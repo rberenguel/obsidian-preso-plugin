@@ -339,7 +339,7 @@ export class SlidePreviewView {
 				bgWrapper.style.removeProperty("--custom-bg-filter");
 			}
 			Array.from(shadowHost.querySelectorAll("p")).forEach((p) => {
-				if (p.innerHTML.trim() === "") p.remove();
+				if (p.textContent?.trim() === "") p.remove();
 			});
 			bgWrapper.append(...Array.from(shadowHost.childNodes));
 		} else if (sideImageInfo) {

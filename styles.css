@@ -274,11 +274,11 @@ ul {
 /* Apply the top-alignment logic to the inner text containers for these layouts. */
 .layout-bg
 	.bg-content-wrapper:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		> :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
+	> :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	),
 .layout-split
 	.split-text-pane:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		> :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
+	> :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	) {
 	flex-direction: column;
 	justify-content: flex-start;
@@ -303,31 +303,31 @@ ul {
 	font-size: 14cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		> :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
+	>	 :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h2 {
 	font-size: 13cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		> :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
+	>	 :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h3 {
 	font-size: 12cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		> :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
+	>	 :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h4 {
 	font-size: 11cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		> :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
+	>	 :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h5 {
 	font-size: 10cqh;
 }
 .slide-preview:has(:is(h1, h2, h3, h4, h5, h6)):has(
-		> :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
+	>	 :is(p, ul, ol, pre, blockquote):not(.slide-footnotes-container *)
 	)
 	h6 {
 	font-size: 9cqh;
