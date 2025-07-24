@@ -20,7 +20,7 @@ export default class SlidesPlugin extends Plugin {
 	private lastActiveLeaf: WorkspaceLeaf | null = null;
 
 	async onload() {
-		this.exporter = new Exporter(this.app);
+		this.exporter = new Exporter(this.app, this);
 
 		this.addCommand({
 			id: "toggle-slide-preview",
@@ -199,6 +199,92 @@ export default class SlidesPlugin extends Plugin {
 		this.lastActiveLeaf = newLeaf;
 	}
 
+	private getImagePath(
+		directiveValue: string | null,
+		sourcePath: string,
+	): string | null {
+		if (!directiveValue) return null;
+		const imageMatch = directiveValue.match(/!\[\[(.*?)\]\]/);
+		if (imageMatch) {
+			const imageName = imageMatch[1];
+			const imageFile = this.app.metadataCache.getFirstLinkpathDest(
+				imageName,
+				sourcePath,
+			);
+			if (imageFile instanceof TFile) {
+				return this.app.vault.getResourcePath(imageFile);
+			}
+		}
+		return null;
+	}
+
+	private extractSlideExtras(
+		slides: Slide[],
+		currentSlideIndex: number,
+		sourcePath: string,
+	) {
+		let footerText: string | null = null;
+		let footerImage: string | null = null;
+		let slideNumbers = false;
+		let headerText: string | null = null;
+		let headerImage: string | null = null;
+		let topLeftIcon: string | null = null;
+		let topRightIcon: string | null = null;
+
+		for (let i = 0; i <= currentSlideIndex; i++) {
+			const slide = slides[i];
+			if ("footer" in slide.directives)
+				footerText =
+					slide.directives["footer"] === "empty"
+						? null
+						: slide.directives["footer"];
+			if ("footer-image" in slide.directives)
+				footerImage =
+					slide.directives["footer-image"] === "empty"
+						? null
+						: slide.directives["footer-image"];
+			if ("slidenumbers" in slide.directives)
+				slideNumbers = slide.directives["slidenumbers"] === "true";
+			if ("header" in slide.directives)
+				headerText =
+					slide.directives["header"] === "empty"
+						? null
+						: slide.directives["header"];
+			if ("header-image" in slide.directives)
+				headerImage =
+					slide.directives["header-image"] === "empty"
+						? null
+						: slide.directives["header-image"];
+			if ("top-left-icon" in slide.directives)
+				topLeftIcon =
+					slide.directives["top-left-icon"] === "empty"
+						? null
+						: slide.directives["top-left-icon"];
+			if ("top-right-icon" in slide.directives)
+				topRightIcon =
+					slide.directives["top-right-icon"] === "empty"
+						? null
+						: slide.directives["top-right-icon"];
+		}
+
+		let showSlideNumberOnThisSlide = slideNumbers;
+		if (slides[currentSlideIndex].directives["slidenumbers"] === "false") {
+			showSlideNumberOnThisSlide = false;
+		}
+
+		return {
+			footerText,
+			footerImageSrc: this.getImagePath(footerImage, sourcePath),
+			slideNumber: showSlideNumberOnThisSlide
+				? `${currentSlideIndex + 1} / ${slides.length}`
+				: null,
+			headerText,
+			headerImageSrc: this.getImagePath(headerImage, sourcePath),
+			topLeftIconSrc: this.getImagePath(topLeftIcon, sourcePath),
+			topRightIconSrc: this.getImagePath(topRightIcon, sourcePath),
+		};
+	}
+
 	activateSlides(leaf: WorkspaceLeaf) {
 		const view = leaf.view as MarkdownView;
 		const file = view.file;
@@ -233,97 +319,14 @@ export default class SlidesPlugin extends Plugin {
 			}
 
 			const currentSlide = slides[currentSlideIndex];
-
-			let footerText: string | null = null;
-			let footerImage: string | null = null;
-			let slideNumbers = false;
-			let headerText: string | null = null;
-			let headerImage: string | null = null;
-			let topLeftIcon: string | null = null;
-			let topRightIcon: string | null = null;
-
-			for (let i = 0; i <= currentSlideIndex; i++) {
-				const slide = slides[i];
-				if ("footer" in slide.directives) {
-					footerText =
-						slide.directives["footer"] === "empty"
-							? null
-							: slide.directives["footer"];
-				}
-				if ("footer-image" in slide.directives) {
-					footerImage =
-						slide.directives["footer-image"] === "empty"
-							? null
-							: slide.directives["footer-image"];
-				}
-				if ("slidenumbers" in slide.directives) {
-					slideNumbers = slide.directives["slidenumbers"] === "true";
-				}
-				if ("header" in slide.directives) {
-					headerText =
-						slide.directives["header"] === "empty"
-							? null
-							: slide.directives["header"];
-				}
-				if ("header-image" in slide.directives) {
-					headerImage =
-						slide.directives["header-image"] === "empty"
-							? null
-							: slide.directives["header-image"];
-				}
-				if ("top-left-icon" in slide.directives) {
-					topLeftIcon =
-						slide.directives["top-left-icon"] === "empty"
-							? null
-							: slide.directives["top-left-icon"];
-				}
-				if ("top-right-icon" in slide.directives) {
-					topRightIcon =
-						slide.directives["top-right-icon"] === "empty"
-							? null
-							: slide.directives["top-right-icon"];
-				}
-			}
-
-			let showSlideNumberOnThisSlide = slideNumbers;
-			if (currentSlide.directives["slidenumbers"] === "false") {
-				showSlideNumberOnThisSlide = false;
-			}
-			await previewView.update(currentSlide.content, file.path);
-
-			const getImagePath = (
-				directiveValue: string | null,
-			): string | null => {
-				if (!directiveValue) return null;
-				const imageMatch = directiveValue.match(/!\[\[(.*?)\]\]/);
-				if (imageMatch) {
-					const imageName = imageMatch[1];
-					const imageFile =
-						this.app.metadataCache.getFirstLinkpathDest(
-							imageName,
-							file.path,
-						);
-					if (imageFile instanceof TFile) {
-						return this.app.vault.getResourcePath(imageFile);
-					}
-				}
-				return null;
-			};
-
-			previewView.setExtras(
-				{
-					footerText: footerText,
-					footerImageSrc: getImagePath(footerImage),
-					slideNumber: showSlideNumberOnThisSlide
-						? `${currentSlideIndex + 1} / ${slides.length}`
-						: null,
-					headerText: headerText,
-					headerImageSrc: getImagePath(headerImage),
-					topLeftIconSrc: getImagePath(topLeftIcon),
-					topRightIconSrc: getImagePath(topRightIcon),
-				},
-				"",
+			const extras = this.extractSlideExtras(
+				slides,
+				currentSlideIndex,
+				file.path,
 			);
+
+			await previewView.update(currentSlide.content, file.path);
+			previewView.setExtras(extras, "");
 		};
 
 		previewView.registerDomEvent(view.contentEl, "click", update);
