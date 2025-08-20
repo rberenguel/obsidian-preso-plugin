@@ -88,6 +88,69 @@ export default class SlidesPlugin extends Plugin {
 			"layout-change",
 			this.handleLayoutChange.bind(this),
 		);
+		this.app.workspace.on(
+			"editor-change",
+			this.handleEditorChange.bind(this),
+		);
+	}
+
+	private async handleEditorChange() {
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!activeView?.file) {
+			return;
+		}
+
+		const file = activeView.file;
+		const fileCache = this.app.metadataCache.getFileCache(file);
+		const presoValue = fileCache?.frontmatter?.preso;
+
+		if (typeof presoValue === "string" && presoValue.trim() !== "") {
+			console.log(
+				`[Preso-Debug] Global editor-change: presoValue = ${presoValue} for file ${file.path}`,
+			);
+			// If it's a preso note and preview is not active, activate it
+			if (!this.previewViews.has(file.path)) {
+				this.activateSlides(activeView.leaf);
+			}
+			// Always update the current slide if it's a preso note
+			const previewView = this.previewViews.get(file.path);
+			if (previewView) {
+				const content = activeView.editor.getValue();
+				const slides = getSlidesWithBoundaries(content);
+				const cursor = activeView.editor.getCursor();
+
+				previewView.setTheme(
+					typeof presoValue === "string" ? presoValue : null,
+				);
+
+				const currentSlideIndex = slides.findIndex(
+					(slide) =>
+						cursor.line >= slide.startLine &&
+						cursor.line <= slide.endLine,
+				);
+
+				if (currentSlideIndex === -1) {
+					await previewView.update("", file.path);
+					previewView.setExtras({}, "");
+					return;
+				}
+
+				const currentSlide = slides[currentSlideIndex];
+				const extras = this.extractSlideExtras(
+					slides,
+					currentSlideIndex,
+					file.path,
+				);
+
+				await previewView.update(currentSlide.content, file.path);
+				previewView.setExtras(extras, "");
+			}
+		} else {
+			// If it's not a preso note, deactivate slides if active for this file
+			if (this.previewViews.has(file.path)) {
+				this.deactivateSlides(activeView.leaf);
+			}
+		}
 	}
 
 	private togglePreview(leaf: WorkspaceLeaf) {
@@ -294,47 +357,10 @@ export default class SlidesPlugin extends Plugin {
 		previewView.create();
 		this.previewViews.set(file.path, previewView);
 
-		const update = async () => {
-			const content = view.editor.getValue();
-			const slides = getSlidesWithBoundaries(content);
-			const cursor = view.editor.getCursor();
-
-			const currentCache = this.app.metadataCache.getFileCache(file);
-			const presoValue = currentCache?.frontmatter?.preso;
-
-			previewView.setTheme(
-				typeof presoValue === "string" ? presoValue : null,
-			);
-
-			const currentSlideIndex = slides.findIndex(
-				(slide) =>
-					cursor.line >= slide.startLine &&
-					cursor.line <= slide.endLine,
-			);
-
-			if (currentSlideIndex === -1) {
-				await previewView.update("", file.path);
-				previewView.setExtras({}, "");
-				return;
-			}
-
-			const currentSlide = slides[currentSlideIndex];
-			const extras = this.extractSlideExtras(
-				slides,
-				currentSlideIndex,
-				file.path,
-			);
-
-			await previewView.update(currentSlide.content, file.path);
-			previewView.setExtras(extras, "");
-		};
-
-		previewView.registerDomEvent(view.contentEl, "click", update);
-		update();
-		previewView.show();
-		previewView.registerEvent(
-			this.app.workspace.on("editor-change", () => update()),
+		previewView.registerDomEvent(view.contentEl, "click", () =>
+			this.handleEditorChange(),
 		);
+		previewView.show();
 	}
 
 	deactivateSlides(leaf: WorkspaceLeaf) {
